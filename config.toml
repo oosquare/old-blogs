@@ -1,4 +1,4 @@
-baseURL = "https://ctj12461.github.io"
+baseURL = "https://ctj12461.vercel.app"
 # [en, zh-cn, fr, ...] 设置默认的语言
 defaultContentLanguage = "zh-cn"
 # 网站语言，仅在这里 CN 大写
@@ -253,7 +253,7 @@ theme = "FixIt"
     Gitea = ""
     XMPP = ""
     Matrix = ""
-    Bilibili = ""
+    Bilibili = "https://space.bilibili.com/456798748"
     Email = "ctj12461@163.com"
     RSS = true #
 

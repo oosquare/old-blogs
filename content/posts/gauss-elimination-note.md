@@ -50,11 +50,11 @@ seo:
 比如有一个方程组如下：
 
 $$
-\begin{array}{l}
+\begin{cases}
 3x+2y+3z=10\\\\
 3x+y+4z=12\\\\
 x+y+z=4
-\end{array}
+\end{cases}
 $$
 
 我们可以这么用矩阵表示:
@@ -160,4 +160,455 @@ $$
 \end{bmatrix}
 $$
 
-**Step 2:** $row_3 \longleftarrow row$
+**Step 2:** $row_3 \longleftarrow row_3 - \frac{1}{2}row_1$
+$$
+\begin{bmatrix}
+2 & 2 & 3 & 10 \\\\
+0 & -2 & -\frac{1}{2} & -3 \\\\
+0 & 0 & -\frac{1}{2} & -4
+\end{bmatrix}
+$$
+
+**Step 3:** $row_3 \longleftarrow row_3 - 0\cdot row_2$
+
+增广矩阵不变。
+
+##### 高斯-约旦消元
+由于计算机上浮点数的精度有限，要尽可能选择绝对值较大的数作为除数，所以枚举到第 $i$ 行时，可以找到 $x_i$ 的系数最大的方程，与当前行交换，这种方法叫做高斯-约旦消元法。
+
+##### 解的判断
+方程组有可能有无数解（含自由元）或无解。得到一个对角矩阵后，若存在对角元素 $k_{ii} = 0$，而常数项 $c_i \ne 0$，则无解，否则若存在对角元素 $k_{ii} = 0$，而常数项 $c_i = 0$，则含自由元。
+
+#### 代码实现
+```cpp
+class EquationGroup {
+public:
+    enum class Result {
+        UNIQUE, INFINITY, NO_SOLUTION
+    };
+
+    void init(int n) {
+        this->n = n;
+        e = vector<vector<double>>(n + 1, vector<double>(n + 2));
+    }
+
+    Equation &operator[](int x) {
+        return e[x];
+    }
+
+    pair<vector<double>, Result> solve() {
+        transform();
+        Result res = calc();
+        vector<double> x(n + 1);
+
+        for (int i = 1; i <= n; ++i)
+            x[i] = e[i][n + 1];
+        
+        return {x, res};
+    }
+private:
+    vector<vector<double>> e;
+    int n; // 未知数个数
+
+    void transform() {
+        for (int i = 1; i <= n; ++i) {
+            int p = i;
+            // 选择 e[][i] 绝对值最大的一行进行交换
+            for (int j = i + 1; j <= n; ++j)
+                if (abs(e[p][i]) < abs(e[j][i]))
+                    p = j;
+            
+            if (p != i)
+                for (int j = 1; j <= n + 1; ++j)
+                    swap(e[i][j], e[p][j]);
+            // 初等行变换
+            for (int j = i + 1; j <= n; ++j) {
+                double rate = e[j][i] / e[i][i];
+
+                for (int k = 1; k <= n + 1; ++k)
+                    e[j][k] -= e[i][k] * rate;
+            }
+        }
+    }
+
+    Result calc() {
+        Result res = Result::UNIQUE;
+        
+        for (int i = n; i >= 1; --i) {
+            // 把解 x_i 存在 e[i][n + 1] 中
+            for (int j = i + 1; j <= n; ++j)
+                e[i][n + 1] -= e[i][j] * e[j][n + 1];
+            
+            if (!e[i][i]) {
+                e[i][n + 1] /= e[i][i];
+            } else {
+                if (e[i][n + 1])
+                    res = Result::NO_SOLUTION;
+                else if (res != Result::NO_SOLUTION)
+                    res = Result::INFINITY;
+            }
+        }
+
+        return res;
+    }
+};
+```
+
+#### 例题
+##### Luogu P4035 球形空间产生器
+> 给出一个 $n + 1$ 个 $n$ 维空间的点，求这 $n + 1$ 个点构成的 $n$ 维球体的球心。
+> 
+> $1 \le n \le 10$。
+
+设球心为 $(x_1,x_2,\dots,x_n)$，半径为 $r$，对于球体的某个点 $p$，有如下关系：
+
+$$
+\sum_{i = 1}^{n} (p_i - x_i) ^ 2 = r ^ 2\\\\
+$$ 
+
+展开并移项得到：
+
+$$
+\sum_{i = 1}^{n} 2p_ix_i + (r ^ 2 - \sum_{i = 1}^{n} x_i ^ 2) = \sum_{i = 1}^{n} p_i ^ 2
+$$
+
+把括号看成一个整体，显然是一个 $n + 1$ 元线性方程组，直接高斯消元求解。
+
+```cpp
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+using namespace std;
+
+constexpr int MAXN = 10 + 5;
+
+int n;
+double pos[MAXN][MAXN], mat[MAXN][MAXN];
+
+void preprocess() {
+    for (int i = 1; i <= n + 1; ++i) {
+        double sum = 0;
+
+        for (int j = 1; j <= n; ++j) {
+            mat[i][j] = 2 * pos[i][j];
+            sum += pos[i][j] * pos[i][j];
+        }
+        
+        mat[i][n + 1] = 1;
+        mat[i][n + 2] = sum;
+    }
+}
+
+void transform(int n) {
+    for (int i = 1; i <= n; ++i) {
+        int p = i;
+
+        for (int j = i + 1; j <= n; ++j)
+            if (abs(mat[p][i]) < abs(mat[j][i]))
+                p = j;
+        
+        if (i != p)
+            for (int j = 1; j <= n + 1; ++j)
+                swap(mat[i][j], mat[p][j]);
+
+        for (int j = i + 1; j <= n; ++j) {
+            double rate = mat[j][i] / mat[i][i];
+
+            for (int k = i; k <= n + 1; ++k)
+                mat[j][k] -= rate * mat[i][k];
+        }
+    }
+}
+
+void calc(int n) {
+    for (int i = n; i >= 1; --i) {
+        for (int j = i + 1; j <= n; ++j)
+            mat[i][n + 1] -= mat[i][j] * mat[j][n + 1];
+        
+        mat[i][n + 1] /= mat[i][i];
+    }
+}
+
+void guass(int n) {
+    transform(n);
+    calc(n);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+
+    cin >> n;
+
+    for (int i = 1; i <= n + 1; ++i)
+        for (int j = 1; j <= n; ++j)
+            cin >> pos[i][j];
+
+    preprocess();
+    guass(n + 1);
+
+    for (int i = 1; i <= n; ++i)
+        cout << fixed << setprecision(3) << mat[i][n + 2] << " ";
+
+    cout << endl;
+    return 0;
+}
+```
+
+##### Codeforces 24D Broken robot
+> $n$ 行 $m$ 列的矩阵，$(1, 1)$ 是矩阵的左上角，$(n, m)$ 是矩阵的右下角。现在你在 $(x, y)$，每次等概率向左，右，下走或原地不动，但不能走出去，问走到最后一行期望的步数。（原地不动也算一步）
+> 
+> $1 \le n, m \le 10 ^ 3$，$1 \le x \le n$，$1 \le y \le m$。
+
+先考虑 $m = 1$ 的情况，有 $\frac{1}{2}$ 的概率留在原地，$\frac{1}{2}$ 的概率向下走，期望步数为 $2 (m - x)$。
+
+若 $m > 1$，设 $f[i][j]$ 为从 $(i, j)$ 走到最后一行的期望步数，则
+
+$$
+f[i][j] = 
+\begin{cases}
+\frac{f[i][j + 1] + f[i + 1][j] + f[i][j]}{3} + 1 & j = 1\\\\
+\frac{f[i][j - 1] + f[i][j + 1] + f[i + 1][j] + f[i][j]}{4} + 1 & 1 < j < m\\\\
+\frac{f[i][j - 1] + f[i + 1][j] + f[i][j]}{3} + 1 & j = m
+\end{cases}
+$$
+
+移项可得：
+
+$$
+\begin{cases}
+2f[i][j] - f[i][j + 1] - f[i + 1][j] = 3 & j = 1\\\\
+3f[i][j] - f[i][j - 1] - f[i][j + 1] - f[i + 1][j] = 4 & 1 < j < m\\\\
+2f[i][j] - f[i][j - 1] - f[i + 1][j] = 3 & j = m
+\end{cases}
+$$
+
+于是每行的转移就可以解决了。然而暴力消元的复杂度不正确，考虑到每个方程都至多只有三个系数不为 $0$，每一行只会消去下一行的一个元（可以手画一个矩阵），利用这个性质，消元可以做到 $\Theta(m)$，总的复杂度就是 $\Theta(m (n-x))$。
+
+```cpp
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+constexpr int MAXN = 1e3 + 5;
+
+// * * 0 0 0 0 | *
+// * * * 0 0 0 | *
+// 0 * * * 0 0 | *
+// 0 0 * * * 0 | *
+// 0 0 0 * * * | *
+// 0 0 0 0 * * | *
+
+int n, m, x, y;
+double mat[MAXN][MAXN], f[MAXN];
+
+void fill() {
+    mat[1][1] = 2;
+    mat[1][2] = -1;
+    mat[1][m + 1] = 3 + f[1];
+
+    for (int i = 2; i < m; ++i) {
+        mat[i][i] = 3;
+        mat[i][i - 1] = -1;
+        mat[i][i + 1] = -1;
+        mat[i][m + 1] = 4 + f[i];
+    }
+
+    mat[m][m] = 2;
+    mat[m][m - 1] = -1;
+    mat[m][m + 1] = 3 + f[m];
+}
+
+void gauss() {
+    for (int i = 1; i < m; ++i) {
+        double rate = mat[i + 1][i] / mat[i][i];
+        mat[i + 1][i] = 0;
+        mat[i + 1][i + 1] -= rate * mat[i][i + 1];
+        mat[i + 1][m + 1] -= rate * mat[i][m + 1];
+    }
+
+    mat[m][m + 1] /= mat[m][m];
+
+    for (int i = m - 1; i >= 1; --i)
+        mat[i][m + 1] = (mat[i][m + 1] - mat[i + 1][m + 1] * mat[i][i + 1]) / mat[i][i];
+    
+    for (int i = 1; i <= m; ++i)
+        f[i] = mat[i][m + 1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin >> n >> m >> x >> y;
+    
+    if (m == 1) {
+        cout << 2 * (n - x) << endl;
+        return 0;
+    }
+
+    for (int i = n - 1; i >= x; --i) {
+        fill();
+        gauss();
+    }
+
+    cout << setprecision(8) << f[y] << endl;
+    return 0;
+}
+```
+
+##### Luogu P3232 游走
+> 给定一个 $n$ 个点 $m$ 条边的无向连通图，顶点从 $1$ 编号到 $n$，边从 $1$ 编号到 $m$。
+> 
+> 小 Z 在该图上进行随机游走，初始时小 Z 在 $1$ 号顶点，每一步小 Z 以相等的概率随机选择当前顶点的某条边，沿着这条边走到下一个顶点，获得等于这条边的编号的分数。当小 Z 到达 $n$ 号顶点时游走结束，总分为所有获得的分数之和。现在，请你对这 $m$ 条边进行编号，使得小 Z 获得的总分的期望值最小。
+> 
+> $2 \le n \le 500$，$1 \le m \le 125000$。
+
+设 $f[i]$ 表示走到 $i$ 的期望次数，$deg[i]$ 为点 $x$ 的度，则对于一条边 $(x, y)$，其期望次数为：
+
+$$
+\frac{f[x]}{deg[x]} + \frac{f[y]}{deg[y]}
+$$
+
+考虑 $f[i]$ 的转移，设 $j$ 为 $i$ 的上一个结点，则：
+
+$$
+f[i] = \sum\frac{f[j]}{deg[j]} + [i = 1]
+$$
+
+因为初始在点 $1$，则期望次数会多 $1$。把这个方程，由于 $n$ 是终点，不参加转移，设 $f[n] = 0$。于是前 $n - 1$ 个转移方程组成一个方程组，解出它即可。
+
+最后算出每条边的期望次数，根据排序不等式，次数越多的边应该编号越小，这样答案更优。
+
+```cpp
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+constexpr int MAXN = 500 + 10;
+constexpr int MAXM = 125000 + 10;
+
+struct Equation {
+    double a[MAXN];
+
+    double &operator[](int x) {
+        return a[x];
+    }
+};
+
+struct EquationGroup {
+    Equation e[MAXN];  
+    int n;
+
+    void init(int n) {
+        this->n = n;
+    }
+
+    Equation &operator[](int x) {
+        return e[x];
+    }
+
+    void transform() {
+        for (int i = 1; i <= n; ++i) {
+            int p = i;
+            
+            for (int j = i + 1; j <= n; ++j)
+                if (abs(e[p][i]) < abs(e[j][i]))
+                    p = j;
+            
+            if (p != i)
+                for (int j = 1; j <= n + 1; ++j)
+                    swap(e[i][j], e[p][j]);
+            
+            for (int j = i + 1; j <= n; ++j) {
+                double rate = e[j][i] / e[i][i];
+
+                for (int k = 1; k <= n + 1; ++k)
+                    e[j][k] -= e[i][k] * rate;
+            }
+        }
+    }
+
+    void calc() {
+        for (int i = n; i >= 1; --i) {
+            for (int j = i + 1; j <= n; ++j)
+                e[i][n + 1] -= e[i][j] * e[j][n + 1];
+            
+            e[i][n + 1] /= e[i][i];
+        }
+    }
+
+    vector<double> solve() {
+        transform();
+        calc();
+        vector<double> res(n + 1);
+
+        for (int i = 1; i <= n; ++i)
+            res[i] = e[i][n + 1];
+        
+        return res;
+    }
+};
+
+struct Edge {
+    int x, y;
+    double p;
+
+    bool operator<(const Edge &rhs) const {
+        return p > rhs.p;
+    }
+};
+
+int n, m;
+EquationGroup e;
+vector<int> graph[MAXN];
+int deg[MAXN];
+Edge edges[MAXM];
+double ans;
+
+void link(int x, int y) {
+    graph[x].push_back(y);
+    graph[y].push_back(x);
+    ++deg[x];
+    ++deg[y];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cout << fixed << setprecision(3);
+    cin >> n >> m;
+
+    for (int i = 1; i <= m; ++i) {
+        auto &[x, y, p] = edges[i];
+        cin >> x >> y;
+        link(x, y);
+    }
+
+    e.init(n - 1);
+
+    for (int i = 1; i < n; ++i) {
+        for (int j : graph[i])
+            if (j != n)
+                e[i][j] = -1.0 / deg[j];
+        
+        e[i][i] = 1;
+    }
+
+    e[1][n] = 1;
+
+    auto f = e.solve();
+
+    for (int i = 1; i <= m; ++i) {
+        auto &[x, y, p] = edges[i];
+        p = (x != n ? f[x] / deg[x] : 0) + (y != n ? f[y] / deg[y] : 0);
+    }
+
+    sort(edges + 1, edges + 1 + m);
+
+    for (int i = 1; i <= m; ++i)
+        ans += i * edges[i].p;
+
+    cout << ans << endl;
+    return 0;
+}
+```
