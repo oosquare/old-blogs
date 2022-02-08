@@ -192,7 +192,7 @@ theme = "FixIt"
 
   # 作者的社交信息设置
   [params.social]
-    GitHub = "https://github.com/ctj12461"
+    GitHub = "ctj12461"
     Linkedin = ""
     Twitter = ""
     Instagram = ""
