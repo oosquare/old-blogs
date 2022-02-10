@@ -292,7 +292,7 @@ theme = "FixIt"
       # 是否显示代码块的复制按钮
       copy = true
       # 默认展开显示的代码行数
-      maxShownLines = 200
+      maxShownLines = 0
     #  KaTeX 数学公式 (https://katex.org)
     [params.page.math]
       enable = true
