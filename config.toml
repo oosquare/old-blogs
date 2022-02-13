@@ -152,7 +152,7 @@ theme = "FixIt"
     # 日期格式（月和日）
     dateFormat = "01-02"
     # RSS 文章数目
-    rss = 10
+    rss = 4
 
   #  List（目录或标签）页面配置
   [params.list]
