@@ -1,8 +1,8 @@
 ---
-title: "Burnside 引理 & Polya 定理学习笔记"
+title: "Burnside 引理 & Pólya 定理学习笔记"
 subtitle: ""
 date: 2022-02-12T19:14:24+08:00
-draft: true
+draft: false
 author: ""
 authorLink: ""
 description: ""
@@ -16,7 +16,7 @@ tags:
   - 群论
   - 置换群
   - Burnside 引理
-  - Polya 定理
+  - Pólya 定理
   - C++
 categories:
   - 笔记
@@ -42,7 +42,7 @@ seo:
 # See details front matter: /theme-documentation-content/#front-matter
 ---
 
-Burnside 引理和 Polya 定理主要用于解决计算本质不同方案数的计数问题。
+Burnside 引理和 Pólya 定理主要用于解决计算本质不同方案数的计数问题。
 
 ## 群论
 ### 基本定义
@@ -53,7 +53,7 @@ Burnside 引理和 Polya 定理主要用于解决计算本质不同方案数的�
 1. 封闭性：$\forall x,y\in S$，若 $z=x\cdot y$，则 $z\in S$
 2. 结合律：$\forall x,y,z\in S$，$(x\cdot y)\cdot z=x\cdot (y \cdot z)$
 3. 单位元：存在唯一一个元素 $e \in S$ 满足 $\forall x \in S$，$e\cdot x=x$
-4. 逆元：$\forall x \in S$，都可以找到唯一一元素 $x^{-1}$ 满足 $x \cdot x^{-1} = e$，这个元素称为 $x$ 的逆元
+4. 逆元：$\forall x \in S$，都可以找到唯一一个元素 $x^{-1}$ 满足 $x \cdot x^{-1} = e$，这个元素称为 $x$ 的逆元
 
 举一个简单的例子，$(\mathrm{Z},+)$ 就是一个群，无论取哪两个元素进行加法运算，结果仍然是整数；加法满足结合律；单位元 $e = 0$；任意一个元素 $x$ 的逆元 $x^{-1} = -x$。
 
@@ -129,8 +129,7 @@ $$
 \begin{pmatrix}
 a_1, a_2, a_3, a_4, a_5, a_6\\\\
 a_2, a_1, a_5, a_4, a_6, a_3
-\end{pmatrix}
-=
+\end{pmatrix}=
 \begin{pmatrix}
 a_1, a_2\\\\
 a_2, a_1
@@ -152,7 +151,7 @@ $$
 ### 置换群
 由置换和置换的乘法组成的群就是置换群，置换经过乘法运算后显然还是置换，多个置换的结合顺序先后不影响答案，单位元是恒等置换，即上下两行的元素排列相同，每个置换的逆元是交换上下两行的置换。
 
-## 本质不同计数问题与置换
+### 本质不同计数问题与置换
 这一类的问题通常会给出一些规定，定义了哪些状态是本质相同的。比如要求给一个 $2 \times 2$ 的正方形染色，可选颜色有两种，如果一种方案可以通过旋转正方形得到另外一种，则这两种方案等价。
 
 如果我们把正方形的每个格子看成集合的一个元素，则可以通过定义置换来表示旋转，如果一个状态经过某个置换的作用后得到了另外一个状态，则它们等价。
@@ -192,9 +191,9 @@ $$
 
 可以自己枚举验证一下。
 
-## Polya 定理
+## Pólya 定理
 ### 定理内容
-Polya 定理是 Burnside 引理的具体化，同时也有一定的限制条件。在前置条件于 Burnside 引理相同的情况下，给出 Polya 定理的公式：
+Pólya 定理是 Burnside 引理的具体化，同时也有一定的限制条件。在前置条件于 Burnside 引理相同的情况下，给出 Pólya 定理的公式：
 
 $$
 |X/G|=\frac{1}{|G|}\sum_{f\in G} |B|^{\tau(f)}
@@ -204,7 +203,7 @@ $$
 
 一个理解循环置换的方法就是把它看成进行有向图连边后的环，可以通过找环来得出循环置换个数。
 
-### 用 Polya 定理解决正方形染色问题
+### 用 Pólya 定理解决正方形染色问题
 同样分 $4$ 类讨论：
 1. 顺时针旋转 $0$，$\tau(f)=4$，共 $2^4=16$ 种
 2. 顺时针旋转 $\frac{\pi}{2}$，$\tau(f)=1$，共 $2$ 种
@@ -215,8 +214,8 @@ $$
 |X/G|=\frac{1}{4}\times (16+2+4+2)=6
 $$
 
-### Polya 定理的限制
-有时题目会在染色方面做限制，例如某种颜色的使用次数，或颜色之间的互相制约等等，此时 Polya 定理的简单计数就不管用了，需要通过 DP 或组合数学的方法求出不动点个数，带入 Burnside 引理公式计算。
+### Pólya 定理的限制
+有时题目会在染色方面做限制，例如某种颜色的使用次数，或颜色之间的互相制约等等，此时 Pólya 定理的简单计数就不管用了，需要通过 DP 或组合数学的方法求出不动点个数，带入 Burnside 引理公式计算。
 
 ## 例题
 ### Luogu P4980 【模板】Pólya 定理
@@ -248,9 +247,9 @@ $$
 ix+ny=\gcd(i,n),\ \gcd(i,n) \mid (T-S)
 $$
 
-也就是，$T$ 与 $S$ 之间的路程是 $\gcd(i,n)$ 的倍数，若 $S$ 固定，则有 $\frac{n}{gcd(i,n)}$ 个对应的 $T$ 构成了循环，共有 $\frac{n}{\frac{n}{\gcd(i,n)}}=\gcd(i,n)$ 个循环，即 $\tau(f_i)=\gcd(i,n)$。
+也就是，$T$ 与 $S$ 之间的距离是 $\gcd(i,n)$ 的倍数，若 $S$ 固定，则有 $\frac{n}{gcd(i,n)}$ 个对应的 $T$ 构成了循环，共有 $\frac{n}{\frac{n}{\gcd(i,n)}}=\gcd(i,n)$ 个循环，即 $\tau(f_i)=\gcd(i,n)$。
 
-使用 Polya 定理，带入公式，最终答案为：
+使用 Pólya 定理，带入公式，最终答案为：
 
 $$
 \begin{aligned}
@@ -260,7 +259,7 @@ $$
 \end{aligned}
 $$
 
-单次询问时间复杂度 $O(d(n)(\log_2 n+\sqrt{n}))$。
+单次询问时间复杂度 $\Theta(d(n)(\log_2 n+\sqrt{n}))$。
 
 ```cpp
 #include <iostream>
@@ -523,6 +522,355 @@ int main() {
     
     ans = 1ll * ans * power(m, p - 2) % p;
     cout << ans << endl;
+    return 0;
+}
+```
+
+### BZOJ 1547 周末晚会
+> 安排 $n$ 个人围绕着圆桌坐着，其中一些是男孩，另一些是女孩。你的任务是找出所有合法的方案数并对 $10^8+7$ 取模，使得不超过 $k$ 个女孩座位是连续的。循环同构会被认为是同一种方案。
+> 
+> $T$ 组数据， $1\le T\le 50$，$1\le n,k\le 2000$。
+
+~~一个已死 OJ 上的题目。~~
+
+设男孩为 B，女孩为 G，一共 $n$ 种置换，$f_i$ 表示顺时针 $i$ 格。可以用 DP 计算不动点个数。
+
+对于 $f_i$，如果没有 $k$ 的限制，在环上标记出每个点属于哪个循环置换，可以发现循环置换的种类是交错分布的，并以 $\gcd(i,n)$ 为周期，所以我们对 $[1, \gcd(i,n)]$ 怎么染色，$[\gcd(i,n)+1,2\gcd(i,n)]\dots [n-\gcd(i,n)+1, n]$ 也是怎么染色。问题转化为求对 $[1,\gcd(i,n)]$ 染色且将这个区间头尾相接后仍然合法的方案数。
+
+环上的问题考虑断环为链，先枚举开头的 G 的个数，再计算后续的方案数，最后再加起来。设 $f[t][i][0/1]$ 为不考虑头尾相接情况下，强制开头有 $t$ 个 G，第 $i$ 位为 B 或 G 的方案数，$g[i]$ 为将 $[1,i]$ 头尾相接可以得到的合法方案数：
+
+$$
+f[t][t][1]=1\\\\
+f[t][i][0]=f[t][i-1][0]+f[t][i-1][1]\\\\
+f[t][i][1]=\sum_{j=i-k}^{i-1} f[t][j][0]\\\\
+g[i]=\sum_{t=0}^{k}(f[t][i][0]+\sum_{j=i-(k-t)}^{i-1} f[t][j][0])
+$$
+
+$f[t][i][1]$ 可以前缀和优化，转移都是 $O(1)$ 的。因为 $g[i]$ 要考虑头尾相接，所以末尾与开头的 G 的个数不能超过 $k$。可以发现对于每一组数据，我们只要预处理一遍 $g$ 就可以进行计算了，最终答案为：
+
+$$
+\begin{aligned}
+\frac{1}{n} \sum_{i=1}^{n}g[\gcd(i,n)] & = \frac{1}{n}  \sum_{d\mid n}g[d]\sum_{i=1}^{n}[\gcd(i,n)=d]\\\\
+& = \frac{1}{n}  \sum_{d\mid n}g[d] \varphi(\frac{n}{d})
+\end{aligned}
+$$
+
+单组数据的时间复杂度为 $\Theta(nk+d(n)\sqrt{n})$。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int MAX_N = 2000 + 10;
+constexpr int MAX_K = 2000 + 10;
+constexpr int MOD = 1e8 + 7;
+
+int t, n, k;
+int f[MAX_N][2], sum[MAX_N], g[MAX_N];
+
+int power(int x, int y) {
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = 1ll * res * x % MOD;
+
+        x = 1ll * x * x % MOD;
+    }
+
+    return res;
+}
+
+int phi(int x) {
+    int res = x;
+
+    for (int i = 2; i * i <= x; ++i) {
+        if (x % i)
+            continue;
+
+        res = res / i * (i - 1);
+
+        while (x % i == 0)
+            x /= i;
+    }
+
+    if (x > 1)
+        res = res / x * (x - 1);
+
+    return res;
+}
+
+void dp() {
+    for (int i = 1; i <= n; ++i)
+        g[i] = 0;
+
+    for (int t = 0; t <= k; ++t) {
+        for (int i = 0; i <= n; ++i) {
+            f[i][0] = f[i][1] = 0;
+            sum[i] = 0;
+        }
+
+        f[t][1] = 1;
+
+        if (k >= n)
+            g[t] = (g[t] + f[t][1]) % MOD;
+
+        for (int i = t + 1; i <= n; ++i) {
+            f[i][0] = (f[i - 1][0] + f[i - 1][1]) % MOD;
+            f[i][1] = (sum[i - 1] - sum[max(i - k - 1, 0)] + MOD) % MOD;
+            sum[i] = (sum[i - 1] + f[i][0]) % MOD;
+            g[i] = ((g[i] + f[i][0]) % MOD + (sum[i - 1] - sum[max(i - (k - t) - 1, 0)] + MOD)) % MOD;
+        }
+    }
+}
+
+int solve() {
+    int ans = 0;
+    dp();
+
+    for (int i = 1; i * i <= n; ++i) {
+        if (n % i)
+            continue;
+
+        if (i * i == n) {
+            ans = (ans + 1ll * g[i] * phi(n / i)) % MOD;
+        } else {
+            ans = (ans + 1ll * g[i] * phi(n / i)) % MOD;
+            ans = (ans + 1ll * g[n / i] * phi(i)) % MOD;
+        }
+    }
+
+    ans = 1ll * ans * power(n, MOD - 2) % MOD;
+    return ans;
+}
+
+int main() {
+    cin >> t;
+
+    for (int i = 1; i <= t; ++i) {
+        cin >> n >> k;
+        cout << solve() << endl;
+    }
+
+    return 0;
+}
+```
+
+### POJ 2888 Magic Bracelet
+> 有一个 $n$ 颗魔法珠子组成的魔法手镯。有 $m$ 种不同的魔法珠。每一种珠子都是无限的。将许多珠子串在一起，就可以制成一个美丽的圆形魔法手镯。某些种类的珠子会相互作用并爆炸，你必须非常小心以确保这些珠子不会串在一起。
+>
+> 如果忽略围绕手镯中心旋转产生的重复，你可以制作多少个不同的手镯？答案对 $9973$ 取模。
+>
+> $1\le n\le 10^9$，$\gcd(n, 9973)=1$，$1\le m\le 10$，$1\le k\le \frac{m(m-1)}{2}$。
+
+与上一题的分析思路类似，不同的是对于每个置换 $f_i$，需要求 $[1,\gcd(i,n)]$ 头尾相接且满足制约条件的方案数。
+
+枚举开头的珠子，设 $f[t][i][j]$ 为强制 $t$ 开头，到第 $i$ 位时选择第 $j$ 种珠子，$valid[i][j]$ 表示 $i,j$ 两种珠子相邻是否合法，$g[i]$ 为将 $[1,i]$ 头尾相连的合法方案数。
+
+$$
+f[t][1][i]=[t=i]\\\\
+f[t][i][j]=\sum_{valid(j,k)}f[t][i-1][k]\\\\
+g[i]=\sum_{valid(t,j)} f[t][i][j]
+$$
+
+实际转移是可以去掉 $t$ 这一维。$n$ 特别大，去掉 $t$ 后发现是一个矩阵乘法的形式，于是构造初始矩阵 $F_t$ 和转移矩阵 $T$：
+
+$$
+F_t=
+\begin{bmatrix}
+f[t][1][1] & f[t][1][2] & \cdots & f[t][1][m]
+\end{bmatrix}
+$$
+$$
+T=
+\begin{bmatrix}
+valid[1][1] & valid[2][1] & \cdots & valid[m][1]\\\\
+valid[1][2] & valid[2][2] & \cdots & valid[m][2]\\\\
+\vdots & \vdots & \ddots & \vdots\\\\
+valid[1][m] & valid[2][m] & \cdots & valid[m][m]
+\end{bmatrix}
+$$
+
+求 $g[x]$，则用矩阵快速幂算出 $F_t\times T^{x-1}$ 优化 DP，时间复杂度为 $\Theta(m^3\log_2x)$。
+
+最终答案为
+
+$$
+\begin{aligned}
+\frac{1}{n} \sum_{i=1}^{n}g[\gcd(i,n)] & = \frac{1}{n}  \sum_{d\mid n}g[d]\sum_{i=1}^{n}[\gcd(i,n)=d]\\\\
+& = \frac{1}{n}  \sum_{d\mid n}g[d] \varphi(\frac{n}{d})
+\end{aligned}
+$$
+
+单组数据时间复杂度为 $\Theta(d(n)(m^3\log_2x+\sqrt{n}))$。
+
+值得一提的是，POJ 的评测环境已经很久没有升级过了，评测速度巨慢，而且现在还在使用 `C++ 98`，官方给出的解释是：
+> Currently there is no plan to enable the experimental C++0x features before the new C++ standard is officially published and relatively well-supported.
+
+所以接下来的代码在 POJ 无法通过，但已经在学校的自建 OJ 通过了，CPU 为 `Intel(R) Core(TM) i5-8265U`，每个测试点平均时间不超过 $80\ \text{ms}$，所以其实是很优秀的。根据实际情况，POJ 的评测记录已不具有参考性，~~所以就直接给出无法通过的代码。~~
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int MAX_M = 10 + 1;
+constexpr int MOD = 9973;
+
+class Matrix {
+public:
+    Matrix(int row = 0, int column = 0) {
+        this->row = row;
+        this->column = column;
+
+        for (int i = 1; i <= row; ++i)
+            for (int j = 1; j <= column; ++j)
+                data[i][j] = 0;
+    }
+
+    void unit() {
+        for (int i = 1; i <= row; ++i)
+            for (int j = 1; j <= column; ++j)
+                data[i][j] = (i == j);
+    }
+
+    int * operator[](int x) {
+        return data[x];
+    }
+
+    const int * operator[](int x) const {
+        return data[x];
+    }
+
+    Matrix operator*(const Matrix & rhs) const {
+        Matrix res(row, rhs.column);
+
+        for (int i = 1; i <= row; ++i)
+            for (int j = 1; j <= rhs.column; ++j)
+                for (int k = 1; k <= column; ++k)
+                    res[i][j] = (res[i][j] + data[i][k] * rhs[k][j]) % MOD;
+
+        return res;
+    }
+
+    Matrix operator^(int exp) const {
+        Matrix res(row, row), base(*this);
+        res.unit();
+
+        for (; exp; exp /= 2) {
+            if (exp % 2)
+                res = res * base;
+
+            base = base * base;
+        }
+
+        return res;
+    }
+private:
+    int row, column;
+    int data[MAX_M][MAX_M];
+};
+
+int t, n, m, k;
+bool valid[MAX_M][MAX_M];
+
+int power(int x, int y) {
+    x %= MOD;
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = res * x % MOD;
+
+        x = x * x % MOD;
+    }
+
+    return res;
+}
+
+int phi(int x) {
+    int res = x;
+
+    for (int i = 2; i * i <= x; ++i) {
+        if (x % i)
+            continue;
+
+        res = res / i * (i - 1);
+
+        while (x % i == 0)
+            x /= i;
+    }
+
+    if (x > 1)
+        res = res / x * (x - 1);
+
+    return res;
+}
+
+int dp(int t, int k) {
+    Matrix f(1, m), trans(m, m);
+    int res = 0;
+    f[1][t] = 1;
+
+    for (int i = 1; i <= m; ++i)
+        for (int j = 1; j <= m; ++j)
+            trans[j][i] = valid[i][j];
+
+    f = f * (trans ^ (k - 1));
+
+    for (int i = 1; i <= m; ++i)
+        if (valid[t][i])
+            res += f[1][i];
+
+    return res % MOD;
+}
+
+int calc(int k) {
+    int res = 0;
+
+    for (int i = 1; i <= m; ++i)
+        res += dp(i, k);
+
+    return res % MOD;
+}
+
+int solve() {
+    int ans = 0;
+
+    for (int i = 1; i * i <= n; ++i) {
+        if (n % i)
+            continue;
+
+        if (i * i == n) {
+            ans = (ans + 1ll * calc(i) * phi(n / i)) % MOD;
+        } else {
+            ans = (ans + 1ll * calc(i) * phi(n / i)) % MOD;
+            ans = (ans + 1ll * calc(n / i) * phi(i)) % MOD;
+        }
+    }
+
+    return ans * power(n, MOD - 2) % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin >> t;
+
+    while (t--) {
+        cin >> n >> m >> k;
+
+        for (int i = 1; i <= m; ++i)
+            for (int j = 1; j <= m; ++j)
+                valid[i][j] = true;
+
+        for (int i = 1; i <= k; ++i) {
+            int x, y;
+            cin >> x >> y;
+            valid[x][y] = valid[y][x] = false;
+        }
+
+        cout << solve() << endl;
+    }
+
     return 0;
 }
 ```
