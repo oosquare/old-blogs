@@ -90,6 +90,7 @@ $$
 
 以下代码展示了如何求线性同余方程的最小非负整数解：
 
+### 代码
 ```cpp
 template <typename T> T exgcd(T a, T b, T & x, T & y) {
     if (b == 0) {
@@ -120,8 +121,8 @@ template <typename T> optional<T> solveEquation(T a, T c, T p) {
 }
 ```
 
-## 中国剩余定理及其扩展
-### 中国剩余定理
+## 中国剩余定理
+### 形式
 $$
 \begin{cases}
 x \equiv a_1 \pmod{m_1}\\\\
@@ -135,16 +136,17 @@ $$
 
 形如上面这样的线性同余方程组且满足每个方程的模数两两互质，就可以用中国剩余定理解决。中国剩余定理也叫做 `CRT (Chinese Remainder Theorem)`。
 
-`CRT` 的算法流程如下：
+### 求解
 1. 令 $M=\prod_{i=1}^{n} m_i$，$M$ 不对任何数取模
 2. 对于 $m_i$，令 $M_i=\prod_{i\ne j}=\frac{M}{m_i}$，$M_i^{-1}$ 为 $M_i$ 对 $m_i$ 的逆元，$c_i=M_iM_i^{-1}$，$c_i$ 不能对 $m_i$ 取模
 3. 令 $x=\sum_{i=1}^{n}a_ic_i \bmod M$，则 $x$ 为模 $M$ 意义下的唯一解
 
-证明算法的正确性：
+### 算法正确性证明
+对于 $\forall i\ne j$，$m_i\mid M_j$，故 $m_i\mid a_jc_j$，所以在模 $m_i$ 情况下，$x \equiv a_ic_i \pmod{m_i}$。
 
-对于 $\forall i\ne j$，$m_i\mid M_j$，故 $m_i\mid a_jc_j$，所以在模 $m_i$ 情况下，$x \equiv a_ic_i \pmod{m_i}$。因为 $M_i^{-1}$ 为 $M_i$ 对 $m_i$ 的逆元，故在模 $m_i$ 的同余式中 $c_i\equiv 1 \pmod{m_i}$，$a_ic_i\equiv a_i \pmod{m_i}$，即 $x \equiv a_i \pmod{m_i}$，满足第 $i$ 个方程。
+因为 $M_i^{-1}$ 为 $M_i$ 对 $m_i$ 的逆元，故在模 $m_i$ 的同余式中 $c_i\equiv 1 \pmod{m_i}$，$a_ic_i\equiv a_i \pmod{m_i}$，即 $x \equiv a_i \pmod{m_i}$，满足第 $i$ 个方程。
 
-解在模 $M$ 意义下的唯一性证明：
+### 解在模 $M$ 意义下的唯一性证明
 
 设 $x,y$ 不相等，$x,y<M$，但都满足方程组，则可以有下面的方程组：
 
@@ -158,3 +160,164 @@ x - y\equiv 0 \pmod{m_n}\\\\
 $$
 
 则 $\forall i,m_i\mid |x-y|$，所以 $M \mid |x-y|$，即 $|x-y|=kM$，因为 $|x-y|<M$，故 $k=0$，推出 $x=y$，与假设矛盾。
+
+### 代码
+```cpp
+int exgcd(int a, int b, int & x, int & y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    } else {
+        int d = exgcd(b, a % b, x, y);
+        int t = x;
+        x = y;
+        y = t - (a / b) * y;
+        return d;
+    }
+}
+
+int solveEquation(int a, int c, int p) {
+    int x, y;
+    exgcd(a, p, x, y);
+    x *= c;
+    x = (x % p + p) % p;
+    return x;
+}
+
+inline int inv(int x, int p) {
+    return solveEquation(x, 1, p);
+}
+
+int chineseRemainderTheorem(int n, int a[], int m[]) {
+    int mod = 1, ans = 0;
+
+    for (int i = 1; i <= n; ++i)
+        mod *= m[i];
+    
+    for (int i = 1; i <= n; ++i) {
+        int modi = mod / m[i];
+        ans = (ans + a[i] * modi * inv(modi)) % mod; // 用 exgcd 求逆元
+    }
+
+    return ans;
+}
+```
+
+## 扩展中国剩余定理
+### 形式
+$$
+\begin{cases}
+a_1 x \equiv c_1 \pmod{m_1}\\\\
+a_2 x \equiv c_2 \pmod{m_2}\\\\
+\cdots\\\\
+a_n x \equiv c_n \pmod{m_n}\\\\
+\end{cases}
+$$
+
+相比普通中国剩余定理求解的方程组，少了模数互质的限制。
+
+### 求解
+考虑合并方程。设当前要合并前 $i$ 个方程，显然可以转化为合并前 $i-1$ 个方程与第 $i$ 个方程。
+
+设 $x_i$ 为合并前 $i$ 个方程的解，$d_i=\operatorname{lcm}(m_1,m_2,\dots,m_i)$。构造 $x_i=sx_{i-1}+t$，我们要使 $x_i$ 能够满足前 $i-1$ 个方程，就要满足以下条件：
+1. $\forall j < i$，$a_j(sx_{i-1}+t)\equiv a_j x_{i-1} \pmod{m_j}$
+2. $a_i(sx_{i-1}+t) \equiv c_i \pmod{m_i}$
+
+最简单的办法就是令 $s=1,t=d_{i-1}y_i$，并求一个合适的 $y_i$，也就是要求出以下方程的解 $y_i$：
+$$
+a_i d_{i-1}y_i \equiv c_i - a_i x_{i-1} \pmod{m_i}
+$$
+
+用 `exgcd` 解决，若该线性同余方程无解，则方程组无解，否则求出前 $i$ 个方程的解 $x_i$，进行下一次合并。
+
+假设各个 $m_i$ 同阶，时间复杂度 $O(n \log_2 m_i)$。
+
+### 代码
+```cpp
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int lcm(int a, int b) {
+    return a / gcd(a, b) * b;
+}
+
+int exgcd(int a, int b, int & x, int & y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    } else {
+        int d = exgcd(b, a % b, x, y);
+        int t = x;
+        x = y;
+        y = t - (a / b) * y;
+        return d;
+    }
+}
+
+optional<int> solveEquation(int a, int c, int p) {
+    a = (a % p + p) % p;
+    c = (c % p + p) % p;
+    int x, y, d = exgcd(a, p, x, y);
+    
+    if (c % d)
+        return nullopt;
+    
+    x *= (c / d);
+    int m = p / d;
+    x = (x % m + m) % m;
+    return x;
+}
+
+optional<int> exChineseRemainderTheorem(int n, int a[], int c[], int m[]) {
+    int x = 0, d = 1;
+    
+    for (int i = 1; i <= n; ++i) {
+        auto oy = solveEquation(a[i] * d, c[i] - a[i] * x, m[i]);
+
+        if (!oy.has_value())
+            return nullopt;
+        
+        int y = oy.value();
+        x = x + d * y;
+        d = lcm(d, m[i]);
+        x %= d;
+    }
+
+    return x;
+}
+```
+
+## BSGS
+### 离散对数
+与离散对数相对的是我们熟悉的连续对数，也就是最经常接触的对数。而离散对数是在同余中的一个概念。
+
+若在模 $m$ 意义下，$x$ 满足以下等式：
+
+$$
+a^x=b \pmod{m}
+$$
+
+则 $x$ 为以 $a$ 为底的 $b$ 的离散对数。注意离散对数不同于连续对数，一个数的离散对数有很多个，并不是唯一的。
+
+如果 $\gcd(a,m)=1$，则我们可以使用 `BSGS` 算法求解一个数的最小的离散对数。
+
+### 求解
+因为 $\gcd(a,m)=1$，则 $a^k$ 对 $m$ 的逆元一定存在。所以我们可以把 $a^x$ 写成 $a^{ps-q}$ 并直接将 $a^{-q}$ 提取出来，即：
+
+$$
+a^{ps} \equiv ba^q \pmod{m}
+$$
+
+考虑暴力的思路，可以枚举两边的 $p,q$，如果有同余的两个 $a^{ps},a^q$，就更新答案。
+
+考虑到枚举会计算许多重复的东西，可以用某种数据结构维护映射表，存下每个 $(a^q,q)$，再枚举左边找相应的同余的项。我们先假设 $x=ps-q \in [0,m)$，则当 $s=\sqrt{m}$ 时，时间复杂度最优，为 $\Theta(\sqrt{m})$ 或 $\Theta(\sqrt{m}\log_2 \sqrt{m})$，具体为哪种复杂度，取决于是用哈希表还是平衡树实现。 
+
+### 可解性证明
+至于为什么一定有 $x\in [0,m)$，使用抽屉原理证明：
+
+对于任意的 $x$，$a^x \bmod m$ 最多只有 $m$ 种取值，而在 $x\in [0,m]$ 时，一共有 $m+1$ 种指数，则根据抽屉原理得出必定存在一对 $x,y$ 满足 $a^x \equiv a^y \pmod{m}$。设 $t=|x-y|$，则 $a^x a^k=a^{x+t}a^k$，因为已经保证 $\gcd(a,m)=1$，则逆元一定存在，所以可以规定 $t\in\mathrm{Z}$，所以指数具有周期性，一定可以得到 $x\in [0,m)$。
+
+### 代码
