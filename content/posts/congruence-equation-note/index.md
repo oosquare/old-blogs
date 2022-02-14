@@ -56,7 +56,7 @@ $$
 形如上面这种形式，满足各项的系数和解均为整数的方程就是数论中的不定方程。
 
 ### 求解
-**Theorem 1：** $\forall a, b \in \mathrm{Z}$，一定存在 $x,y\in \mathrm{Z}$，使得 $ax+by=\gcd(a,b)$。
+**Theorem 1**：$\forall a, b \in \mathrm{Z}$，一定存在 $x,y\in \mathrm{Z}$，使得 $ax+by=\gcd(a,b)$。
 
 这个定理又叫做裴蜀定理，根据这个定理，可以得出不定方程 $ax+by=c$ 有解的充要条件就是 $\gcd(a,b)\mid c$。记 $d=\gcd(a,b)$，则我们可以先求出 $ax'+by'=d$ 的解，再令 $x=\frac{c}{d}x',y=\frac{c}{d}y'$，就得出原方程的一组解。
 
@@ -115,8 +115,7 @@ template <typename T> optional<T> solveEquation(T a, T c, T p) {
     if (c % d != 0)
         return nullopt;
     
-    x *= c / d;
-    x = (x % (p / d) + (p / d)) % (p / d);
+    x = (1ll * (c / d) * x % (p / d) + (p / d)) % (p / d);
     return x;
 }
 ```
@@ -180,8 +179,7 @@ int exgcd(int a, int b, int & x, int & y) {
 int solveEquation(int a, int c, int p) {
     int x, y;
     exgcd(a, p, x, y);
-    x *= c;
-    x = (x % p + p) % p;
+    x = (1ll * x * c % p + p) % p;
     return x;
 }
 
@@ -197,7 +195,7 @@ int chineseRemainderTheorem(int n, int a[], int m[]) {
     
     for (int i = 1; i <= n; ++i) {
         int modi = mod / m[i];
-        ans = (ans + a[i] * modi * inv(modi)) % mod; // 用 exgcd 求逆元
+        ans = (ans + 1ll * a[i] * modi * inv(modi)) % mod; // 用 exgcd 求逆元
     }
 
     return ans;
@@ -239,10 +237,6 @@ int gcd(int a, int b) {
     return b == 0 ? a : gcd(b, a % b);
 }
 
-int lcm(int a, int b) {
-    return a / gcd(a, b) * b;
-}
-
 int exgcd(int a, int b, int & x, int & y) {
     if (b == 0) {
         x = 1;
@@ -281,9 +275,9 @@ optional<int> exChineseRemainderTheorem(int n, int a[], int c[], int m[]) {
             return nullopt;
         
         int y = oy.value();
-        x = x + d * y;
-        d = lcm(d, m[i]);
-        x %= d;
+        int g = gcd(d, m[i]);
+        d = d / g * m[i];
+        x = (x + 1ll * (d / m[i] * g) * y) % d;
     }
 
     return x;
@@ -313,7 +307,7 @@ $$
 
 考虑暴力的思路，可以枚举两边的 $p,q$，如果有同余的两个 $a^{ps},a^q$，就更新答案。
 
-考虑到枚举会计算许多重复的东西，可以用某种数据结构维护映射表，存下每个 $(a^q,q)$，再枚举左边找相应的同余的项。我们先假设 $x=ps-q \in [0,m)$，则当 $s=\sqrt{m}$ 时，时间复杂度最优，为 $\Theta(\sqrt{m})$ 或 $\Theta(\sqrt{m}\log_2 \sqrt{m})$，具体为哪种复杂度，取决于是用哈希表还是平衡树实现。 
+考虑到枚举会计算许多重复的东西，可以用某种数据结构维护映射表，存下每个 $(a^q,q)$，再枚举左边找相应的同余的项。我们先假设 $x=ps-q \in [0,m)$，则当 $s=\lceil\sqrt{m}\rceil$ 时，时间复杂度最优，为 $\Theta(\sqrt{m})$ 或 $\Theta(\sqrt{m}\log_2 \sqrt{m})$，具体为哪种复杂度，取决于是用哈希表还是平衡树实现。 
 
 ### 可解性证明
 至于为什么一定有 $x\in [0,m)$，使用抽屉原理证明：
@@ -321,3 +315,188 @@ $$
 对于任意的 $x$，$a^x \bmod m$ 最多只有 $m$ 种取值，而在 $x\in [0,m]$ 时，一共有 $m+1$ 种指数，则根据抽屉原理得出必定存在一对 $x,y$ 满足 $a^x \equiv a^y \pmod{m}$。设 $t=|x-y|$，则 $a^x a^k=a^{x+t}a^k$，因为已经保证 $\gcd(a,m)=1$，则逆元一定存在，所以可以规定 $t\in\mathrm{Z}$，所以指数具有周期性，一定可以得到 $x\in [0,m)$。
 
 ### 代码
+```cpp
+int power(int x, int y, int m) {
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = 1ll * res * x % m;
+        
+        x = 1ll * x * x % m;
+    }
+
+    return res;
+}
+
+optional<int> bsgs(int a, int b, int m) {
+    a %= m;
+    b %= m;
+    
+    unordered_map<int, int> buc;
+    int s = ceil(sqrt(m)), prod = b, base = power(a, s, m);
+    buc[b] = 0;
+
+    for (int i = 0; i < s; ++i) {
+        prod = 1ll * prod * a % m;
+        buc[prod] = i;
+    }
+
+    prod = 1;
+
+    for (int i = 0; i <= s; ++i) {
+        auto it = buc.find(prod);
+
+        if (it != buc.end() && i * s - it->second >= 0)
+            return i * s - it->second;
+            
+        prod = 1ll * prod * base % m;
+    }
+
+    return nullopt;
+}
+```
+
+## 扩展 BSGS
+### 形式
+$$
+a^x \equiv b \pmod{m}
+$$
+
+其中 $a,m$ 不一定互质。这种情况下，逆元不一定存在，也就不可以把指数拆成两个部分来优化。
+
+考虑先把式子化为 $\gcd(a,m)=1$ 的形式。方法是不断提取出 $a$ 与 $m$ 互质的部分，任何整个式子同除以这个数。
+
+$$
+a \equiv c \pmod{m} \iff \frac{a}{d} \equiv \frac{c}{d} \pmod{\frac{m}{d}}\ (d\mid a \wedge d\mid c \wedge d\mid m)
+$$
+
+这个式子是同余式的基本性质。所以按照这样的方法提取：
+
+$$
+a^x \equiv b \pmod{m}\\\\
+\Downarrow\\\\
+\frac{a}{d_1}a^{x-1} \equiv \frac{b}{d_1} \pmod{\frac{m}{d_1}}\\\\
+\Downarrow\\\\
+\frac{a}{d_1 d_2}a^{x-2} \equiv \frac{b}{d_1 d_2} \pmod{\frac{m}{d_1 d_2}}\\\\
+\Downarrow\\\\
+\vdots\\\\
+\Downarrow\\\\
+\frac{a}{d_1 d_2\cdots d_k}a^{x-k} \equiv \frac{b}{d_1 d_2\cdots d_k} \pmod{\frac{m}{d_1 d_2\cdots d_k}}\\\\
+$$
+
+假设现在 $a$ 与 $\frac{m}{d_1 d_2\cdots d_k}$ 互质，就可以用 `BSGS` 求出最后一个方程的解 $x-k$，再加上 $k$ 就是 $x$ 了。
+
+需要注意两点：
+1. 若在提取过程中，出现 $d_1 d_2 \cdots d_i \nmid b$，则方程无法再继续提取，方程无解
+2. 有可能答案在 $[0,k)$ 内，只要 $O(k)$ 枚举检验即可。
+
+```cpp
+int gcd(int a, int b) {
+    int t;
+
+    while (b) {
+        t = a;
+        a = b;
+        b = a % b;
+    }
+    
+    return a;
+}
+
+int power(int x, int y, int m) {
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = 1ll * res * x % m;
+        
+        x = 1ll * x * x % m;
+    }
+
+    return res;
+}
+
+optional<int> bsgs(int a, int b, int m) {
+    a %= m;
+    b %= m;
+    
+    unordered_map<int, int> buc;
+    int s = ceil(sqrt(m)), prod = b, base = power(a, s, m);
+    buc[b] = 0;
+
+    for (int i = 0; i < s; ++i) {
+        prod = 1ll * prod * a % m;
+        buc[prod] = i;
+    }
+
+    prod = 1;
+
+    for (int i = 0; i <= s; ++i) {
+        auto it = buc.find(prod);
+
+        if (it != buc.end() && i * s - it->second >= 0)
+            return i * s - it->second;
+            
+        prod = 1ll * prod * base % m;
+    }
+
+    return nullopt;
+}
+
+optional<int> exBsgs(int a, int b, int m) {
+    a = (a % m + m) % m;
+    b = (b % m + m) % m;
+    
+    if (m == 1 || b == 1)
+        return 0;
+        
+    int prod = 1, d, k = 0;
+
+    while (true) {
+        d = gcd(a, m);
+        
+        if (d == 1)
+            break;
+        
+        if (b % d)
+            return nullopt;
+        
+        b /= d;
+        m /= d;
+        ++k;
+        prod = prod * (a / d) % m;
+
+        if (prod == b)
+            return k;
+    }
+
+    auto res = bsgs(a, b, m);
+
+    if (!res.has_value())
+        return nullopt;
+    
+    return res.value() + k;
+}
+```
+
+## 阶与原根
+### 阶
+对于一对互质的整数 $a,m$，若 $r$ 满足 $r \ne 0$ 且 $a^r \equiv 1 \pmod{m}$ 且不存在任何小于 $r$ 的正整数满足该同余式，则称 $r$ 为 $a$ 对 $m$ 的阶，记作 $r = \delta_m(a)$。
+
+**Theorem 1**：$0 < \delta_m(a) \le \varphi(m)$。
+
+若 $\gcd(a,m)=1$，则欧拉定理一定成立，即 $a^{\varphi(m)} \equiv 1 \pmod{m}$，显然 $0 < \delta_m(a) \le \varphi(m)$。
+
+**Theorem 2**：若 $a^k \equiv 1 \pmod{m}$，则 $\delta_m(a) \mid k$。
+
+假设满足 $\delta_m(a) \nmid k$ 但 $a^k \equiv 1 \pmod{m}$，则 $k=s\delta_m(a)+t$，其中 $t \in (0,\delta_m(a))$，所以：
+
+$$
+a^k \equiv (a^{\delta_m(a)})^sa^t \equiv a^t \pmod{m}
+$$
+
+根据阶的定义，$a^t \not\equiv 1 \pmod{m}$，所以矛盾，故 $\delta_m(a) \mid k$。
+
+### 原根
+若 $a$ 满足 $\delta_m(a)=\varphi(m)$，则 $a$ 为 $m$ 的原根。
