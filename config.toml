@@ -84,7 +84,7 @@ theme = "FixIt"
     # 搜索引擎的类型 ("lunr", "algolia")
     type = "lunr"
     # 文章内容最长索引长度
-    contentLength = 4000
+    contentLength = 20
     # 搜索框的占位提示语
     placeholder = ""
     #  最大结果数目

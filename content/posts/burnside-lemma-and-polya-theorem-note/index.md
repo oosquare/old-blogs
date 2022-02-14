@@ -7,7 +7,7 @@ author: ""
 authorLink: ""
 description: ""
 keywords: ""
-license: ""
+license: "本文以 CC BY-NC 4.0 许可证发布"
 comment: false
 weight: 0
 
@@ -26,16 +26,16 @@ hiddenFromSearch: false
 
 summary: ""
 resources:
-- name: featured-image
-  src: featured-image.jpg
-- name: featured-image-preview
-  src: featured-image-preview.jpg
+  - name: featured-image
+    src: featured-image.jpg
+  - name: featured-image-preview
+    src: featured-image-preview.jpg
 
 toc:
   enable: true
 math:
   enable: true
-lightgallery: true
+lightgallery: false
 seo:
   images: []
 
