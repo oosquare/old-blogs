@@ -500,3 +500,212 @@ $$
 
 ### 原根
 若 $a$ 满足 $\delta_m(a)=\varphi(m)$，则 $a$ 为 $m$ 的原根。
+
+**Theorem 1**：$a$ 为 $m$ 的原根的充要条件为 $\gcd(a,m)=1$ 且对于 $\varphi(m)$ 的每一个质因数，$a^{\frac{\varphi(m)}{p}} \not\equiv 1 \pmod{m}$。
+
+根据这个定理，可以轻松判断一个数是否是另一个数的原根。
+
+```cpp
+int gcd(int a, int b) {
+    int t;
+
+    while (b) {
+        t = a;
+        a = b;
+        b = t % b;
+    }
+
+    return a;
+}
+
+int phi(int x) {
+    int res = x;
+
+    for (int i = 2; i * i <= x; ++i) {
+        if (x % i)
+            continue;
+        
+        res = res / i * (i - 1);
+
+        while (x % i)
+            x /= i;
+    }
+
+    if (x > 1)
+        res = res / x * (x - 1);
+    
+    return res;
+}
+
+int power(int x, int y, int m) {
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = 1ll * res * x % m;
+        
+        x = 1ll * x * x % m;
+    }
+
+    return res;
+}
+
+bool isPrimitiveRoot(int a, int m) {
+    if (gcd(a, m) != 1)
+        return false;
+    
+    int pm = phi(m), tmp = pm;
+    a %= m;
+
+    for (int i = 2; i * i <= tmp; ++i) {
+        if (tmp % i)
+            continue;
+        
+        if (power(a, pm / i, m) == 1)
+            return false;
+        
+        while (tmp % i == 0)
+            tmp /= i;
+    }
+
+    if (tmp > 1)
+        if (power(a, pm / tmp, m) == 1)
+            return false;
+
+    return true;
+}
+```
+
+**Theorem 2**：一个数 $m$ 有原根，当且仅当 $m$ 为 $2,4,p^k,2p^k$，其中 $k\in \mathrm{N^*}$，$p$ 为奇质数。
+
+**Theorem 3**：若一个数 $m$ 有原根，则其原根个数为 $\varphi(\varphi(m))$。
+
+**Theorem 4**：若一个数 $m$ 有原根，则其最小原根的数量级为 $m^{\frac{1}{4}}$。
+
+根据这个性质，只需要暴力枚举每个数，求一个数的最小原根的时间复杂度是可以接受的。
+
+```cpp
+int gcd(int a, int b) {
+    int t;
+
+    while (b) {
+        t = a;
+        a = b;
+        b = t % b;
+    }
+
+    return a;
+}
+
+int phi(int x) {
+    int res = x;
+
+    for (int i = 2; i * i <= x; ++i) {
+        if (x % i)
+            continue;
+        
+        res = res / i * (i - 1);
+
+        while (x % i)
+            x /= i;
+    }
+
+    if (x > 1)
+        res = res / x * (x - 1);
+    
+    return res;
+}
+
+int power(int x, int y, int m) {
+    int res = 1;
+
+    for (; y; y /= 2) {
+        if (y % 2)
+            res = 1ll * res * x % m;
+        
+        x = 1ll * x * x % m;
+    }
+
+    return res;
+}
+
+int primitiveRoot(int m) {
+    int pm = phi(m), tmp = pm;
+    vector<int> factor;
+
+    for (int i = 2; i * i <= tmp; ++i) {
+        if (tmp % i)
+            continue;
+        
+        factor.push_back(i);
+        
+        while (tmp % i == 0)
+            tmp /= i;
+    }
+
+    if (tmp > 1)
+        factor.push_back(tmp);
+    
+    for (int i = 2; i <= m; ++i) {
+        if (gcd(i, m) != 1)
+            continue;
+
+        bool found = true;
+        
+        for (int p : factor) {
+            if (power(i, pm / p, m) == 1) {
+                found = false;
+                break;
+            }
+        }
+
+        if (found)
+            return i;
+    }
+
+    return -1;
+}
+```
+
+**Theorem 5**：若 $a$ 为 $m$ 的原根，则 $a,a^2,a^3,\dots,a^{\varphi(m)}$ 两两模 $m$ 不同余。
+
+**Theorem 6**：若 $a$ 为 $m$ 的原根，则对于任意的 $x \in [1,\varphi(m)]$，一定有一个 $k$ 与其一一对应，满足 $x \equiv a^k \pmod{m}$ 且 $k\in [1,\varphi(m)]$，$k$ 被称为 $x$ 的指标，记作 $I(x)$。
+
+比如 $m=13$，其最小原根 $a=2$，则把 $x$ 与 $I(x)$ 写成表格：
+
+| $x$ | $1$ | $2$ | $3$ | $4$ | $5$ | $6$ | $7$ | $8$ | $9$ | $10$ | $11$ | $12$ |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| $I(x)$ | $12$ | $1$ | $4$ | $2$ | $9$ | $5$ | $11$ | $3$ | $8$ | $10$ | $7$ | $6$ |
+
+这个定理可以用于把底数转换为原根的幂，可以利用这个性质解模数为质数的 $N$ 次剩余问题。
+
+## N 次剩余
+### 形式
+$$
+x^n \equiv a \pmod{m}
+$$
+
+其中 $m$ 为奇质数，求 $x\in [0,m)$。由于 $m$ 不是奇质数的方法较复杂，这里不考虑。
+
+### 求解
+设 $g$ 为其原根，则可以利用原根和指标的性质将 $x$ 转化为 $g^y$，即：
+
+$$
+(g^y)^n \equiv (g^n)^y \equiv a \pmod{m}
+$$
+
+这样就可以用 `BSGS` 求出 $y$，再用快速幂求得 $x$ 即可。
+
+也可以再将 $a$ 化为 $g^z$，然后方程化为：
+
+$$
+g^{ny} \equiv g^z \pmod{m}
+$$
+
+于是就可以解出线性同余方程的解 $y$：
+
+$$
+ny \equiv z \pmod{m}
+$$
+
+代码就不写了，上面组合一下就可以了。
