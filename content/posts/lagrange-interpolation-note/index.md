@@ -161,24 +161,23 @@ void preprocess(int deg) {
         inv[i] = 1ll * inv[i + 1] * (i + 1) % MOD;
 }
 
-int interpolation(int deg, int k, int x[], int y[]) {
+int interpolation(int deg, int k, int y[]) {
     int res = 0;
-
     pre[0] = suf[deg + 2] = 1;
 
-    for (int i = 1; i <= n + 1; ++i)
+    for (int i = 1; i <= deg + 1; ++i)
         pre[i] = 1ll * pre[i - 1] * (k - i + MOD) % MOD;
     
-    for (int i = n + 1; i >= 1; --i)
+    for (int i = deg + 1; i >= 1; --i)
         suf[i] = 1ll * suf[i + 1] * (k - i + MOD) % MOD;
 
-    for (int i = 1; i <= n + 1; ++i) {
+    for (int i = 1; i <= deg + 1; ++i) {
         int num = 1ll * y[i] * pre[i - 1] % MOD * suf[i + 1] % MOD;
-        int den = 1ll * inv[i - 1] * inv[deg - i + 1] % MOD * sgnInv(deg - i + 1) % MOD % MOD;
-        res = (1ll * res + 1ll * num * den % MOD) % MOD;
+        int den = 1ll * inv[i - 1] * inv[deg - i + 1] % MOD * sgnInv(deg - i + 1) % MOD;
+        res = (res + 1ll * num * den) % MOD;
     }
 
-    return res
+    return res;
 }
 ```
 
