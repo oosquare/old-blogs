@@ -88,8 +88,6 @@ $$
 
 所以可以把线性同余方程转化为一个二元线性不定方程，求出 $x$ 即可，包括有无解的判定条件都是一样的。
 
-以下代码展示了如何求线性同余方程的最小非负整数解：
-
 ### 代码
 ```cpp
 template <typename T> T exgcd(T a, T b, T & x, T & y) {
@@ -137,7 +135,7 @@ $$
 
 ### 求解
 1. 令 $M=\prod_{i=1}^{n} m_i$，$M$ 不对任何数取模
-2. 对于 $m_i$，令 $M_i=\prod_{i\ne j}=\frac{M}{m_i}$，$M_i^{-1}$ 为 $M_i$ 对 $m_i$ 的逆元，$c_i=M_iM_i^{-1}$，$c_i$ 不能对 $m_i$ 取模
+2. 对于 $m_i$，令 $M_i=\prod_{i\ne j}m_j=\frac{M}{m_i}$，$M_i^{-1}$ 为 $M_i$ 对 $m_i$ 的逆元，$c_i=M_iM_i^{-1}$，$c_i$ 不能对 $m_i$ 取模
 3. 令 $x=\sum_{i=1}^{n}a_ic_i \bmod M$，则 $x$ 为模 $M$ 意义下的唯一解
 
 ### 算法正确性证明
@@ -291,7 +289,7 @@ optional<int> exChineseRemainderTheorem(int n, int a[], int c[], int m[]) {
 若在模 $m$ 意义下，$x$ 满足以下等式：
 
 $$
-a^x=b \pmod{m}
+a^x \equiv b \pmod{m}
 $$
 
 则 $x$ 为以 $a$ 为底的 $b$ 的离散对数。注意离散对数不同于连续对数，一个数的离散对数有很多个，并不是唯一的。
@@ -305,9 +303,9 @@ $$
 a^{ps} \equiv ba^q \pmod{m}
 $$
 
-考虑暴力的思路，可以枚举两边的 $p,q$，如果有同余的两个 $a^{ps},a^q$，就更新答案。
+考虑暴力的思路，可以枚举两边的 $p,q$，如果有同余的两个 $a^{ps},ba^q$，就更新答案。
 
-考虑到枚举会计算许多重复的东西，可以用某种数据结构维护映射表，存下每个 $(a^q,q)$，再枚举左边找相应的同余的项。我们先假设 $x=ps-q \in [0,m)$，则当 $s=\lceil\sqrt{m}\rceil$ 时，时间复杂度最优，为 $\Theta(\sqrt{m})$ 或 $\Theta(\sqrt{m}\log_2 \sqrt{m})$，具体为哪种复杂度，取决于是用哈希表还是平衡树实现。 
+考虑到枚举会计算许多重复的东西，可以用某种数据结构维护映射表，存下每个 $(ba^q,q)$，再枚举左边找相应的同余的项。我们先假设 $x=ps-q \in [0,m)$，则当 $s=\lceil\sqrt{m}\rceil$ 时，时间复杂度最优，为 $\Theta(\sqrt{m})$ 或 $\Theta(\sqrt{m}\log_2 \sqrt{m})$，具体为哪种复杂度，取决于是用哈希表还是平衡树实现。 
 
 ### 可解性证明
 至于为什么一定有 $x\in [0,m)$，使用抽屉原理证明：
@@ -378,11 +376,11 @@ a^x \equiv b \pmod{m}\\\\
 \Downarrow\\\\
 \frac{a}{d_1}a^{x-1} \equiv \frac{b}{d_1} \pmod{\frac{m}{d_1}}\\\\
 \Downarrow\\\\
-\frac{a}{d_1 d_2}a^{x-2} \equiv \frac{b}{d_1 d_2} \pmod{\frac{m}{d_1 d_2}}\\\\
+\frac{a^2}{d_1 d_2}a^{x-2} \equiv \frac{b}{d_1 d_2} \pmod{\frac{m}{d_1 d_2}}\\\\
 \Downarrow\\\\
 \vdots\\\\
 \Downarrow\\\\
-\frac{a}{d_1 d_2\cdots d_k}a^{x-k} \equiv \frac{b}{d_1 d_2\cdots d_k} \pmod{\frac{m}{d_1 d_2\cdots d_k}}\\\\
+\frac{a^k}{d_1 d_2\cdots d_k}a^{x-k} \equiv \frac{b}{d_1 d_2\cdots d_k} \pmod{\frac{m}{d_1 d_2\cdots d_k}}\\\\
 $$
 
 假设现在 $a$ 与 $\frac{m}{d_1 d_2\cdots d_k}$ 互质，就可以用 `BSGS` 求出最后一个方程的解 $x-k$，再加上 $k$ 就是 $x$ 了。
@@ -415,6 +413,27 @@ int power(int x, int y, int m) {
     }
 
     return res;
+}
+
+int exgcd(int a, int b, int & x, int & y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    } else {
+        int d = exgcd(b, a % b, x, y);
+        int t = x;
+        x = y;
+        y = t - a / b * y;
+        return d;
+    }
+}
+
+int inverse(int a, int p) {
+    int x, y;
+    exgcd(a, p, x, y);
+    x = (x % p + p) % p;
+    return x;
 }
 
 optional<int> bsgs(int a, int b, int m) {
@@ -471,7 +490,7 @@ optional<int> exBsgs(int a, int b, int m) {
             return k;
     }
 
-    auto res = bsgs(a, b, m);
+    auto res = bsgs(a, 1ll * b * inverse(prod, m) % p, m);
 
     if (!res.has_value())
         return nullopt;
