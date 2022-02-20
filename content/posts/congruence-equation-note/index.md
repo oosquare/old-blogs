@@ -19,8 +19,9 @@ tags:
   - BSGS
   - 原根
   - N 次剩余
+  - C++
 categories:
-  - draft
+  - 笔记
 
 hiddenFromHomePage: false
 hiddenFromSearch: false
