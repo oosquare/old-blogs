@@ -179,9 +179,9 @@ theme = "FixIt"
     [params.home.profile]
       enable = true
       # Gravatar 邮箱，用于优先在主页显示的头像
-      gravatarEmail = "ctj12461@163.com"
+      gravatarEmail = ""
       # 主页显示头像的 URL
-      avatarURL = "/images/avatar.png"
+      avatarURL = "/images/avatar.jpg"
       #  主页显示的网站标题（支持 HTML 格式）
       title = "ctj12461's Blog"
       # 主页显示的网站副标题
