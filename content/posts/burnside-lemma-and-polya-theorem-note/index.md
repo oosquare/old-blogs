@@ -13,6 +13,7 @@ weight: 0
 
 tags:
   - OI
+  - 数学
   - 群论
   - 置换群
   - Burnside 引理

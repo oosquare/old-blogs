@@ -15,7 +15,7 @@ theme = "FixIt"
   [[menu.main]]
     identifier = "posts"
     # 你可以在名称（允许 HTML 格式）之前添加其他信息，例如图标
-    pre = "<i class=\"fa fa-archive\" aria-hidden=\"true\"></i>"
+    pre = "<i class=\"fa fa-archive\" aria-hidden=\"true\"></i> "
     # 你可以在名称（允许 HTML 格式）之后添加其他信息，例如图标
     post = ""
     name = "文章"
@@ -25,7 +25,7 @@ theme = "FixIt"
     weight = 1
   [[menu.main]]
     identifier = "tags"
-    pre = "<i class=\"fa fa-tags\" aria-hidden=\"true\"></i>"
+    pre = "<i class=\"fa fa-tags\" aria-hidden=\"true\"></i> "
     post = ""
     name = "标签"
     url = "/tags/"
@@ -33,7 +33,7 @@ theme = "FixIt"
     weight = 2
   [[menu.main]]
     identifier = "categories"
-    pre = "<i class=\"fa fa-folder-open\" aria-hidden=\"true\"></i>"
+    pre = "<i class=\"fa fa-folder-open\" aria-hidden=\"true\"></i> "
     post = ""
     name = "分类"
     url = "/categories/"
@@ -41,7 +41,7 @@ theme = "FixIt"
     weight = 3
   [[menu.main]]
     identifier = "about"
-    pre = "<i class=\"fa fa-info\" aria-hidden=\"true\"></i>"
+    pre = "<i class=\"fa fa-info-circle\" aria-hidden=\"true\"></i> "
     post = ""
     name = "关于"
     url = "/about/"
