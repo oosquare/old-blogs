@@ -158,7 +158,7 @@ Exec=env QT_SCREEN_SCALE_FACTORS=1 /usr/bin/wps %U
 $ sudo pacman -S fcitx5-im fcitx5-configtool fcitx5-chinese-addons fcitx5-rime
 ```
 
-添加环境变量以正常使用 `fcitx5`：
+添加环境变量到 `/etc/environment` 以正常使用 `fcitx5`：
 
 ```sh
 GTK_IM_MODULE=fcitx
