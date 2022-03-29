@@ -16,7 +16,7 @@ tags:
  - Arch Linux
  - 配置
 categories:
- - Linux
+ - 教程
 
 hiddenFromHomePage: false
 hiddenFromSearch: false
