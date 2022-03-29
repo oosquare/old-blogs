@@ -138,7 +138,7 @@ $ yay -S visual-studio-code-bin
 使用 `yay` 安装，并且要安装可选的依赖包：
 
 ```sh
-$ yay -S wps-office-cn wps-office-mime-cn wps-office-mui-cn # 安装中文环境的 WPS
+$ yay -S wps-office-cn wps-office-mime-cn wps-office-mui-zh-cn # 安装中文环境的 WPS
 $ yay -S ttf-wps-fonts wps-office-fonts # 安装字体
 ```
 
