@@ -216,7 +216,7 @@ $$
 ### Luogu P2158 仪仗队
 > 给出一个 $n \times n$ 的点阵，从左下角观察，一个点能够被观察到当且仅当其与左下角的点的连线上没有其他的点，就能够被观察到的点的个数（左下角的点不算）。
 >
-> {{< image src = "https://cdn.luogu.com.cn/upload/pic/1149.png" width = 400 height = 300 >}}
+> []("https://cdn.luogu.com.cn/upload/pic/1149.png")
 >
 > $1\le n \le 40000$。
 

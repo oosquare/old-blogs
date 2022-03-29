@@ -71,7 +71,7 @@ int main() {
 
 这个错误 `Language Server` 是检测不到的，只有在编译后才能发现。编译错误信息如下：
 
-```
+```plain
 In file included from project.cpp:1:
 In file included from /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/11.2.0/../../../../include/c++/11.2.0/functional:59:
 /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/11.2.0/../../../../include/c++/11.2.0/bits/std_function.h:159:10: error: call to implicitly-deleted copy constructor of 'std::_Bind<(lambda at project.cpp:19:27) (Class)>'

@@ -54,7 +54,7 @@ seo:
 $$
 \mu(n)=
 \begin{cases}
-0 & \exist\ p^2 \mid n \wedge p>1\\\\
+0 & \exists\ p^2 \mid n \wedge p>1\\\\
 (-1)^k & n=\prod_{i=1}^{k} p_i
 \end{cases}
 $$
@@ -91,7 +91,7 @@ $\epsilon$ 是 `Dirchlet` 卷积的单位元函数。
 
 考虑 $d$ 作为 $n$ 的约数，其自身对整体的贡献，设 $n,d$ 的唯一分解分别为 $n=\prod_{i=1}^{k} p_i^{c_i}$，$d=\prod_{i=1}^{k} p_i^{c'_i}$。
 
-1. 若 $\exist\ p_i$ 满足 $p_i^2 \mid d$，则 $\mu(d)=0$，容易发现这样的 $d$ 的唯一分解中，存在一个 $c'_i>1$。
+1. 若 $\exists\ p_i$ 满足 $p_i^2 \mid d$，则 $\mu(d)=0$，容易发现这样的 $d$ 的唯一分解中，存在一个 $c'_i>1$。
 2. 若 $n\ne 1$，则 $k\ne 0$，对答案有贡献的 $d$ 一定满足 $\forall\ i\in [1,k],c_i\in [0,1]$，也就是每个 $p_i$ 选一次或不选。枚举 $d$ 选的质约数个数 $i$：
 $$
 \sum_{i=0}^{k} (-1)^i \binom{k}{i}=
@@ -644,7 +644,7 @@ int main() {
 > \sum_{i=1}^{n} \sum_{j=1}^{n} (i+j)^k f(\gcd(i,j)) \gcd(i,j)\\\\
 > f(n) =
 > \begin{cases}
-> 0 & \exist\ p^2 \mid n \wedge p>1\\\\
+> 0 & \exists\ p^2 \mid n \wedge p>1\\\\
 > 1 & \text{otherwise}
 > \end{cases}
 > $$
