@@ -16,7 +16,7 @@ tags:
  - Arch Linux
  - 配置
 categories:
- - 教程
+ - Tech
 
 hiddenFromHomePage: false
 hiddenFromSearch: false
@@ -142,12 +142,14 @@ $ yay -S wps-office-cn wps-office-mime-cn wps-office-mui-zh-cn # 安装中文环
 $ yay -S ttf-wps-fonts wps-office-fonts # 安装字体
 ```
 
-如果使用 `KDE`，可能会遇到字体模糊的情况，这是由缩放不为 100% 引起的问题，`WPS` 使用了 `Qt` 所以只要在运行前加上环境变量 `QT_SCREEN_SCALE_FACTORS=1` 即可，对于启动器或桌面上的 `Desktop Entry`（快捷方式），只要在 `/usr/share/applications` 下修改所有含 `wps` 的 `Desktop Entry` 文件即可，安装下面修改即可：
+如果使用 `KDE`，可能会遇到字体模糊的情况，这是由缩放不为 100% 引起的问题，`WPS` 使用了 `Qt` 所以只要在运行前加上环境变量 `QT_SCREEN_SCALE_FACTORS=1` 即可，对于启动器或桌面上的 `Desktop Entry`，只要在 `/usr/share/applications` 下修改所有含 `wps` 的 `Desktop Entry` 文件即可，按照下面修改即可：
 
 ```sh
 # /usr/share/applications/wps-office-wps.desktop
 Exec=env QT_SCREEN_SCALE_FACTORS=1 /usr/bin/wps %U
 ```
+
+这个方法还适用于其他的 `Qt` 程序。
 
 ## `fcitx 5`
 `fcitx 5` 使用简单，比较推荐。
@@ -186,3 +188,20 @@ $ yay -S fcitx5-pinyin-moegirl-rime
 ```
 
 解决中文下按 `[` 和 `]` 输出为其他符号：编辑 `/usr/share/fcitx5/punctuation/punc.mb.zh_CN`，把 `[` 和 `]` 映射的字符修改为 `【` 和 `】`。
+
+## `Icalingua++`
+一个 `OICQ` 前端，基于已经被封杀的 `Icalingua`，拥有大多数实用功能。`GitHub` 项目主页：<https://github.com/icalingua-plus-plus/icalingua-plus-plus>。有各种安装方式，如 `AppImage`、`pacman`、`yay`。
+
+若使用 `pacman` 安装，则需先下载软件包，比如是 `icalingua-2.6.1-1-x86_64.pkg.tar.zst`，则使用以下命令：
+
+```sh
+$ sudo pacman -U icalingua-2.6.1-1-x86_64.pkg.tar.zst
+```
+
+若使用 `yay`：
+
+```sh
+$ yay -S icalingua++
+```
+
+这里还是要说一句：tx nm*l。

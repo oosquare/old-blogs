@@ -18,7 +18,7 @@ tags:
   - 高斯消元
   - C++
 categories:
-  - 笔记
+  - Olympiad in Information
 
 hiddenFromHomePage: false
 hiddenFromSearch: false

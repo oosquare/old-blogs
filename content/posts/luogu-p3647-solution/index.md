@@ -18,7 +18,7 @@ tags:
   - C++
 
 categories:
-  - 题解
+  - Olympiad in Information
 
 hiddenFromHomePage: false
 hiddenFromSearch: false

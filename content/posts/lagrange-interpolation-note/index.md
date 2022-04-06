@@ -18,7 +18,7 @@ tags:
   - 拉格朗日插值
   - C++
 categories:
-  - 笔记
+  - Olympiad in Information
 
 hiddenFromHomePage: false
 hiddenFromSearch: false

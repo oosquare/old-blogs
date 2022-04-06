@@ -1,5 +1,5 @@
 ---
-title: "std::function 和 std::bind 的一个使用问题"
+title: "std::function 和 std::bind 的使用陷阱"
 subtitle: ""
 date: 2022-03-29T18:21:31+08:00
 draft: false
@@ -15,9 +15,9 @@ tags:
   - C++
   - 标准库
   - 函数对象
-  - 问题
+  - 技术
 categories:
-  - 笔记
+  - Tech
 
 hiddenFromHomePage: false
 hiddenFromSearch: false
@@ -172,7 +172,7 @@ static void _M_clone(_Any_data &__dest, const _Any_data &__source, false_type) {
 }
 ```
 
-这里 `__source._M_access<_Functor>()` 显然不是右值，只能调用复制构造函数。而模板实例化是全部的，不是只对有使用到的代码进行处理。所以解决方案就是不使用 `std::function`，然而只要就无法对函数签名进行限制，只能使用像下面的这种方法：
+这里 `__source._M_access<_Functor>()` 显然不是右值，只能调用复制构造函数。而模板实例化是全部的，不是只对有使用到的代码进行处理。结论就是不可以用 `std::function` 保存不可复制构造的函数对象，包括这种 `std::bind`，因此解决方案也就是不使用 `std::function`。然而这样就不容易对函数签名进行限制，比如下面的这种方法：
 
 ```cpp
 #include <functional>

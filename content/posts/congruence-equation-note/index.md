@@ -22,7 +22,7 @@ tags:
   - N 次剩余
   - C++
 categories:
-  - 笔记
+  - Olympiad in Information
 
 hiddenFromHomePage: false
 hiddenFromSearch: false

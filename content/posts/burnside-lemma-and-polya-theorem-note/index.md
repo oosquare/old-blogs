@@ -20,7 +20,7 @@ tags:
   - Pólya 定理
   - C++
 categories:
-  - 笔记
+  - Olympiad in Information
 
 hiddenFromHomePage: false
 hiddenFromSearch: false
