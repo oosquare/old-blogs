@@ -89,7 +89,7 @@ int main() {
 
 **Debian/Ubuntu/Deepin**
 ```sh
-$ sudo apt install gcc-11 g++-11
+$ sudo apt install gcc-9 g++-9
 ```
 
 **Arch Linux/Manjaro**
@@ -220,6 +220,7 @@ MultiGenerator/src
 
 ```cpp
 class MyGenerator : public GeneratingTask {
+/** 这里只可以使用 private 或 protected */
 private:
     /** 实现这个接口 */
     void generate(std::ostream &data, const DataConfig &config) override {
@@ -280,3 +281,88 @@ private:
 ```
 
 `IntegratedGeneratingTask` 一般用于为强制在线题目或一些复杂的数据结构题目生成数据。
+
+### 使用 `testcase` 创建测试点配置
+`testcase` 函数可以用于创建测试点的配置，其有两个重载：
+
+```cpp
+std::shared_ptr<Variable::Argument> testcase(int id, const std::unordered_map<std::string, std::string> &config);
+
+std::shared_ptr<Variable::Argument> testcase(int subtaskId, int id, const std::unordered_map<std::string, std::string> &config)
+```
+
+这两个函数都返回 `Variable::Argument` 的智能指针，其储存着测试点的配置参数。从函数签名可以很容易地看出第一个是用于创建无子任务的测试点，而第二个是创建有子任务的测试点。
+
+这两个函数都在最后接受一个 `std::unordered_map<std::string, std::string>` 作为测试点配置，使用初始化列表可以很方便地传入这个参数。您还可以使用 `entry` 函数创建一个键值对，使代码更加简单易读：
+
+```cpp
+template <typename Value>
+std::pair<std::string, std::string> entry(const std::string &key, const Value &value);
+```
+
+一般情况下，只需要将返回的 `Variable::Argument` 指针再传给 `Template` 即可，无需做额外的工作。
+
+如果要创建编号为 `2`，带有 `n = 10` 且 `m = 5` 的配置，可以这样获得配置参数：
+
+```cpp
+auto arg = testcase(2, { entry("n", 10), entry("m", 5) });
+```
+
+如果要创建子任务编号为 `1`，子任务内的编号为 `5`，带有 `str = "abc"` 且 `n = 1` 的配置，可以这样获得配置参数：
+
+```cpp
+auto arg = testcase(1, 5, { entry("str", "abc"), entry("n", 1) });
+```
+
+### 把 `Task` 传给 `Template`
+如上文所述，`Template` 规定了一道题目的生成程序应该如何调用 `Task`，且 `MultiGenerator` 定义了 `NormalTemplate` 和 `IntegratedTemplate`，两种 `Template` 使用方法是一样的，以下以 `NormalTemplate` 为例。
+
+构造 `NormalTemplate` 需要传入一个字符串作为题目的名字。
+
+```cpp
+NormalTemplate temp("problem");
+```
+
+随后可以使用 `add` 成员函数创建测试点配置，签名如下：
+
+```cpp
+template <typename Generator, typename Solution>
+void NormalTemplate::add(std::shared_ptr<Variable::Argument> arg);
+```
+
+其中 `Generator` 是用户自定义的实现了 `GeneratingTask` 的类，比如上文示例中的 `MyGenerator`，`Solution` 则是实现了  `SolutionTask` 的类，比如上文示例中的 `MySolution`。
+
+`IntegratedTemplate` 的 `add` 函数签名如下：
+
+```cpp
+template <typename IntegratedGenerator>
+void IntegratedTemplate::add(std::shared_ptr<Variable::Argument> arg);
+```
+
+其中 `IntegratedGenerator` 是用户自定义的实现了 `IntegratedGeneratingTask` 的类，比如上文示例中的 `MyIntegratedGenerator`。
+
+您需要把 `testcase` 函数返回的结果传给这些函数：
+
+```cpp
+temp.add<MyGenerator, MySolution>(testcase(1, {}));
+```
+
+这样 `NormalTemplate` 就会知道要对第 1 个测试点应用 `MyGenerator` 生成数据，用 `MySolution` 求解答案，并且生成的文件为 `problem1.in` 和 `problem1.out`。
+
+可以继续使用 `add` 函数添加测试点，使用方法是一样的，只需修改 `testcase` 函数中的测试点编号即可。注意如果测试点编号出现重复，可能会导致程序崩溃。
+
+### 开始生成数据
+这一部分很简单，只需要指定并行任务数即可：
+
+```cpp
+temp.execute(8);
+```
+
+一般并行任务数会设定为您的 `CPU` 核心数或者线程数。如果您不知道您的 `CPU` 核心数，可以使用 `std::thread::hardware_concurrency` 函数查询：
+
+```cpp
+temp.execute(std::thread::hardware_concurrency());
+```
+
+### 完整示例
+最上面的示例就是一个很好的例子，参考那个即可。
