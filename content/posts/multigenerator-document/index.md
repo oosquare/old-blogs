@@ -85,11 +85,13 @@ int main() {
 首先确保你有支持 `C++ 17` 的编译器，如果你已经有了，可以跳过这一步。
 
 #### Linux
-绝大多数的 `Linux` 发行版预装的 `GCC` 版本都比较低，仅能支持 `C++ 11`，建议使用包管理器进行安装更新版本的 `GCC`，至少为 `GCC 9`，建议 `GCC 11`，这里仅列举部分安装方法，具体请查阅发行版的包管理器文档。
+绝大多数的 `Linux` 发行版预装的 `GCC` 版本都比较低，仅能支持 `C++ 11`，建议使用包管理器进行安装更新版本的 `GCC`，至少为 `GCC 8`，建议 `GCC 11`，这里仅列举部分安装方法，具体请查阅发行版的包管理器文档。
 
 **Debian/Ubuntu/Deepin**
 ```sh
-$ sudo apt install gcc-9 g++-9
+$ sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+$ sudo apt-get update
+$ sudo apt install gcc g++
 ```
 
 **Arch Linux/Manjaro**
@@ -366,3 +368,8 @@ temp.execute(std::thread::hardware_concurrency());
 
 ### 完整示例
 最上面的示例就是一个很好的例子，参考那个即可。
+
+## FAQ
+Q1：我在 `Linux` 平台下，如果编译不能够通过，并且含有错误信息中含有 `pthread` 相关的东西，怎么解决？
+
+A1：`Linux` 下使用多线程需要调用 `pthread`，需要给 `g++` 加上 `-pthread` 参数。
