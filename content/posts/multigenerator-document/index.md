@@ -2,14 +2,42 @@
 title: "MultiGenerator 使用文档"
 date: 2022-04-04T22:15:15+08:00
 draft: false
+author: ""
+authorLink: ""
+description: ""
+keywords: ""
+license: "本文以 CC BY-NC 4.0 许可证发布"
+comment: false
+weight: 0
+
 tags:
- - C++
- - OI
- - 多线程
- - MultiGenerator
- - 项目
+  - C++
+  - OI
+  - 多线程
+  - MultiGenerator
+  - 项目
 categories:
- - Document
+  - Document
+
+hiddenFromHomePage: false
+hiddenFromSearch: false
+
+summary: ""
+resources:
+- name: featured-image
+  src: featured-image.jpg
+- name: featured-image-preview
+  src: featured-image-preview.jpg
+
+toc:
+  enable: true
+math:
+  enable: false
+lightgallery: false
+seo:
+  images: []
+
+# See details front matter: /theme-documentation-content/#front-matter
 ---
 
 ## 概述
@@ -45,7 +73,7 @@ private:
 /** 指定数据求解器，也仅需继承一个抽象类和实现一个成员函数 */
 class AddSolution : public SolutionTask {
 private:
-    /** 假如你有标程，仅需要吧程序用这个类包装起来，再把 main() 改为这个成员函数即可 */
+    /** 假如你有标程，仅需要把程序用这个类包装起来，再把 main() 改为这个成员函数即可 */
     void solve(std::istream &dataIn, std::ostream &dataOut, const DataConfig &) override {
         int a, b;
         /** 像 cin 一样读入数据 */
@@ -284,13 +312,13 @@ private:
 
 `IntegratedGeneratingTask` 一般用于为强制在线题目或一些复杂的数据结构题目生成数据。
 
-### 使用 `testcase` 创建测试点配置
+### 使用 testcase 创建测试点配置
 `testcase` 函数可以用于创建测试点的配置，其有两个重载：
 
 ```cpp
 std::shared_ptr<Variable::Argument> testcase(int id, const std::unordered_map<std::string, std::string> &config);
 
-std::shared_ptr<Variable::Argument> testcase(int subtaskId, int id, const std::unordered_map<std::string, std::string> &config)
+std::shared_ptr<Variable::Argument> testcase(int subtaskId, int id, const std::unordered_map<std::string, std::string> &config);
 ```
 
 这两个函数都返回 `Variable::Argument` 的智能指针，其储存着测试点的配置参数。从函数签名可以很容易地看出第一个是用于创建无子任务的测试点，而第二个是创建有子任务的测试点。
@@ -316,7 +344,7 @@ auto arg = testcase(2, { entry("n", 10), entry("m", 5) });
 auto arg = testcase(1, 5, { entry("str", "abc"), entry("n", 1) });
 ```
 
-### 把 `Task` 传给 `Template`
+### 把 Task 传给 Template
 如上文所述，`Template` 规定了一道题目的生成程序应该如何调用 `Task`，且 `MultiGenerator` 定义了 `NormalTemplate` 和 `IntegratedTemplate`，两种 `Template` 使用方法是一样的，以下以 `NormalTemplate` 为例。
 
 构造 `NormalTemplate` 需要传入一个字符串作为题目的名字。

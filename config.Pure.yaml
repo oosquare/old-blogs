@@ -198,6 +198,6 @@ params:
   widgets:
     # - board
     - category
-    - tag_cloud
+    # - tag_cloud
     # - tag
     - recent_posts
