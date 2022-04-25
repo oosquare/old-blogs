@@ -32,7 +32,7 @@ toc:
   enable: true
 math:
   enable: false
-lightgallery: false
+lightgallery: true
 seo:
   images: []
 
@@ -84,7 +84,7 @@ $ debtap -q package.deb # 转换 deb 包，-q 表示不要编辑除元数据之�
 $ sudo pacman -U package.tar.xz # 安装生成的包
 ```
 
-## `clementine`
+## `Clementine`
 一个跨平台的音乐播放器，不仅可以播放各种格式的音乐，还支持提取歌曲的元信息。
 
 安装：
@@ -95,9 +95,9 @@ $ sudo pacman -S gst-plugins-good gst-plugins-base \
     gst-libav gst-plugins-bad gst-plugins-ugly
 ```
 
-由于 `clementine` 使用了 `GStreamer`，所以还要安装必要的插件，否则无法播放音乐。
+由于 `Clementine` 使用了 `GStreamer`，所以还要安装必要的插件，否则无法播放音乐。
 
-## `wireshark`
+## `Wireshark`
 基于 `Qt` 编写的开源抓包工具。
 
 可以编译源码，也可以直接用 `pacman` 安装：
@@ -151,8 +151,8 @@ Exec=env QT_SCREEN_SCALE_FACTORS=1 /usr/bin/wps %U
 
 这个方法还适用于其他的 `Qt` 程序。
 
-## `fcitx 5`
-`fcitx 5` 使用简单，比较推荐。
+## `Fcitx 5`
+`Fcitx 5` 使用简单，比较推荐。
 
 安装：
 
@@ -205,3 +205,59 @@ $ yay -S icalingua++
 ```
 
 这里还是要说一句：tx nm*l。
+
+## `Gwenview`
+一个看图软件。
+
+```sh
+$ sudo pacman -S gwenview
+```
+
+## `Latte`
+一个 `Dock` 软件，可以与 `KDE` 很好的集成在一起。
+
+```sh
+$ sudo pacman -S latte-dock
+```
+
+随后在桌面上右键点击添加小部件，选择 Latte 任务管理器即可，然后在 `Latte` 上右键添加部件，选择 `Launchpad Plasma Dark`，添加一个启动台。
+
+## 顶部状态栏
+在桌面上右键点击添加面板，选择应用程序菜单栏，然后右键菜单栏添加部件，从左往右依次是：Application Title、全局菜单、面板间隙、系统托盘，数字时钟、锁屏/注销、显示桌面，其中 Application Title 需要进一步配置，选择其配置中的 Apperance 选项卡中的 Text Type，改为 Application name。
+
+配合 `Latte`，总体效果如下，应该是综合了美观和高效的美化配置了。
+
+{{< image src="desktop.png" caption="桌面" >}}
+
+## McMojave 图标
+[项目主页](https://github.com/vinceliuice/McMojave-circle)，下载后运行安装脚本即可。
+
+```sh
+$ git clone https://github.com/vinceliuice/McMojave-circle
+$ cd McMojave-circle
+$ chmod +x install.sh
+$ ./install.sh # 其他参数详见 GitHub 上的 README
+```
+
+## KDE 主题
+安装 WhiteSure，[项目主页](https://github.com/vinceliuice/WhiteSur-kde)。
+
+```sh
+$ git clone https://github.com/vinceliuice/WhiteSur-kde
+$ cd WhiteSur-kde
+$ chmod +x install.sh
+$ ./install.sh
+```
+
+安装后，在设置中选择全局主题为 WhiteSur-alt，Plasma 视觉风格为 WhiteSur-dark，窗口装饰元素为 Breeze 微风（默认的窗口装饰元素底部边框渲染可能有问题，可以自己考虑要不要用）。总之看自己喜好
+
+## Kvantum
+Kvantum 可以配置应用程序风格，比如背景透明等等。Kvantum 适用于很多主题，包括上面的 WhiteSur。
+
+```sh
+$ sudo pacman -S kvantum
+```
+
+一般安装一个全局主题后，Kvantum 中就可以修改其配置了。打开 Kvantum 后，选择变更/删除主题选项卡，然后在选择一个主题的下拉框中选择全局主题，比如 WhiteSur，然后点击配置主题选项卡，在技巧中勾选非活动窗口禁用模糊处理，在合成 & 一般外观中的不透明的应用的文本框中添加 clementine，具体尝试一下就知道如果不加，Clementine 会非常丑。
+
+最后更改应用程序风格为 kvantum。现在只要是使用原生 UI 风格的应用，菜单等都会变为模糊透明。
