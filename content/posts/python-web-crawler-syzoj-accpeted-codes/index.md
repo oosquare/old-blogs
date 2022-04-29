@@ -267,7 +267,13 @@ async def get_code_html(session: aiohttp.ClientSession, url: str) -> str:
     start = content.find('const unformattedCode = "') + len('const unformattedCode = "')
     end = content.find("\";", start, content.find('const formattedCode = "', start))
     # 把 \u003C 这样的 Unicode 转义字符转换为正常的字符
-    return content[start:end].encode("utf-8").decode("unicode-escape")
+    return re.sub(
+        r"(\\u[0-9a-fA-F])",
+        lambda match: match.group(1).encode("utf-8").decode("unicode-escape"),
+        content[start:end],
+        0,
+        re.M,
+    )
 ```
 
 上面的代码判断会返回一个 `HTML` 字符串，含有非常多的 `<span>` 和 `&amp;` 这样的东西，所以接下来的就是正常的 `HTML` 的处理了，把标签去掉，在把一些特殊符号转换回来就可以了：
