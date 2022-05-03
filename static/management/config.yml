@@ -1,0 +1,71 @@
+backend:
+  name: github
+  repo: ctj12461/HugoBlog
+  branch: master
+  commit_messages:
+    create: "Add {{slug}}"
+    update: "Update {{slug}}"
+    delete: "Delete {{slug}}"
+    uploadMedia: "Upload {{path}}"
+    deleteMedia: "Delete {{path}}"
+    openAuthoring: "{{message}}"
+  squash_merge: true
+
+publish_mode: "editorial_workflow"
+
+media_folder: "static/images"
+public_folder: "images"
+
+display_url: "https://ctj12461.vercel.app"
+
+collections:
+  - name: "posts"
+    label: "Posts"
+    folder: "content/posts"
+    path: "{{slug}}/index"
+    preview_path: "content/{{year}}{{month}}{{day}}-{{slug}}"
+    slug: "{{fields.filename}}"
+    media_folder: ""
+    public_folder: ""
+    create: true
+    fields:
+      - {label: "File Name", name: "filename", widget: "string", default: "", required: false}
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Subtitle", name: "subtitle", widget: "string", default: "", required: false}
+      - {label: "Date", name: "date", widget: "datetime"}
+      - {label: "Draft", name: "draft", widget: "boolean", default: true}
+      - {label: "Author", name: "author", widget: "string", default: "", required: false}
+      - {label: "Author Link", name: "authorLink", widget: "string", default: "", required: false}
+      - {label: "Description", name: "description", widget: "string", default: "", required: false}
+      - {label: "License", name: "license", widget: "string", default: "本文以 CC BY-NC 4.0 许可证发布"}
+      - {label: "Comment", name: "comment", widget: "hidden", default: "false"}
+      - {label: "Weight", name: "weight", widget: "hidden", default: "0"}
+      - {label: "Tags", name: "tags", widget: "list"}
+      - {label: "Categories", name: "categories", widget: "list"}
+      - label: "TOC"
+        name: "toc"
+        widget: "object"
+        allow_add: false
+        collapsed: true
+        fields:
+          - {label: "Enable", name: "enable", widget: "boolean", default: true}
+      - label: "Math"
+        name: "math"
+        widget: "object"
+        allow_add: false
+        collapsed: true
+        fields:
+          - {label: "Enable", name: "enable", widget: "boolean", default: false}
+      - {label: "Lightgallery", name: "lightgallery", widget: "boolean", default: false}
+      - {label: "Body", name: "body", widget: "markdown"}
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "About"
+        name: "about"
+        file: "content/about/index.md"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Date", name: "date", widget: "datetime"}
+          - {label: "Draft", name: "draft", widget: "boolean", default: true}
+          - {label: "Body", name: "body", widget: "markdown"}
