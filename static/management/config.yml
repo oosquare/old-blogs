@@ -2,6 +2,7 @@ backend:
   name: github
   repo: ctj12461/HugoBlog
   branch: master
+  base_url: https://netlify-cms.adrianub.vercel.app
   commit_messages:
     create: "Add {{slug}}"
     update: "Update {{slug}}"
