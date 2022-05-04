@@ -146,6 +146,10 @@ theme = "FixIt"
     author = true
     # 网站创立年份
     since = 2022
+    # 网站创立时间
+    siteTime = '2022-02-04T18:00:00+08:00'
+    # 是否显示网站内容总字数
+    wordCount = true
     #  公网安备信息，仅在中国使用（支持 HTML 格式）
     gov = ""
     #  ICP 备案信息，仅在中国使用（支持 HTML 格式）
@@ -288,6 +292,10 @@ theme = "FixIt"
     linkToMarkdown = false
     #  是否在 RSS 中显示全文内容
     rssFullText = true
+    # 页面样式 ("narrow", "normal", "wide", ...)
+    pageStyle = "normal"
+    # 强制使用 Gravatar 作为作者头像
+    gravatarForce = false
     #  目录配置
     [params.page.toc]
       # 是否使用目录
@@ -296,12 +304,26 @@ theme = "FixIt"
       keepStatic = false
       # 是否使侧边目录自动折叠展开
       auto = false
+      # 目录位置 ("left", "right")
+      position = "right"
+    # 在文章开头显示提示信息，提醒读者文章内容可能过时
+    [params.page.expirationReminder]
+      enable = false
+      # 如果文章最后更新于这天数之前，显示提醒
+      reminder = 90
+      # 如果文章最后更新于这天数之前，显示警告
+      warning = 180
+      # 如果文章到期是否关闭评论
+      closeComment = false
     #  代码配置
     [params.page.code]
       # 是否显示代码块的复制按钮
       copy = true
       # 默认展开显示的代码行数
       maxShownLines = 10000
+    [params.page.edit]
+      enable = false
+      url = "" # Link for fork & edit
     #  KaTeX 数学公式 (https://katex.org)
     [params.page.math]
       enable = true
@@ -411,6 +433,21 @@ theme = "FixIt"
         # 可以在你的项目下相同路径存放你自己的数据文件：
         # "assets/data/emoji/"
         emoji = ""
+      # Waline 评论系统设置 (https://waline.js.org)
+      [params.page.comment.waline]
+        enable = false
+        serverURL = ""
+        visitor = false
+        emoji = ['https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo']
+        meta = ['nick', 'mail', 'link']
+        requiredMeta = []
+        login = 'enable'
+        wordLimit = 0
+        pageSize = 10
+        uploadImage = false
+        highlight = true
+        mathTagSupport = false
+        commentCount = false
       # Facebook 评论系统设置 (https://developers.facebook.com/docs/plugins/comments)
       [params.page.comment.facebook]
         enable = false
@@ -440,6 +477,16 @@ theme = "FixIt"
         label = ""
         lightTheme = "github-light"
         darkTheme = "github-dark"
+      # 评论系统设置 (https://twikoo.js.org/)
+      [params.page.comment.twikoo]
+        enable = false
+        envId = ""
+        region = ""
+        path = ""
+        visitor = true
+        commentCount = true
+        # 当 `params.page.lightgallery` 启用时生效
+        lightgallery = false
     #  第三方库配置
     [params.page.library]
       [params.page.library.css]
@@ -502,8 +549,6 @@ theme = "FixIt"
     enable = true
     # 在文章中开启
     enablePost = false
-    # 网站创立时间 例：'2019-02-03T19:30:34+08:00'
-    siteTime = ''
 
   # 网站验证代码，用于 Google/Bing/Yandex/Pinterest/Baidu
   [params.verification]
@@ -558,6 +603,26 @@ theme = "FixIt"
     polyfill = false
     # 是否使用 object-fit-images 来兼容旧式浏览器
     objectFit = false
+
+  # 页面最后添加自定义 JS
+  # "_custom.js" 位于 "themes/FixIt/assets/js" 目录
+  # 可以在你的项目下相同路径存放你自己的自定义 JS 文件：
+  # "assets/js/_custom.js"
+  [params.customJS]
+    enable = true
+ 
+  # 在左上角或者右上角显示 GitHub 开源链接
+  [params.githubCorner]
+    enable = false
+    permalink = "https://github.com/ctj12461"
+    title = "Fork me on GitHub"
+    position = "right" # left, right
+
+  # Gravatar 设置
+  [params.gravatar]
+    # Gravatar 主机，默认：“www.gravatar.com”
+    host = "www.gravatar.com" # "cn.gravatar.com", "gravatar.loli.net"
+    style = "" # "", mp, identicon, monsterid, wavatar, retro, blank, robohash
 
 # Hugo 解析文档的配置
 [markup]
