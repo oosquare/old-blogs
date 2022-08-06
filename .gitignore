@@ -3,4 +3,9 @@ Thumbs.db
 *.log
 public/
 *.exe
-resources
+resources/_gen
+yarn.lock
+.pnp.cjs
+.pnp.loader.mjs
+.yarn
+/node_modules/
