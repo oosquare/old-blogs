@@ -68,6 +68,11 @@ theme = "FixIt"
   images = ["/logo.png"]
   #  开启 PWA 支持
   enablePWA = true
+  # 是否自动显示外链图标
+  externalIcon = false
+  # 默认情况下，FixIt 只会在主页的 HTML 头中注入主题元标记
+  # 您可以将其关闭，但如果您不这样做，我们将不胜感激，因为这是观察 FixIt 受欢迎程度上升的好方法
+  disableThemeInject = false
 
   #  应用图标配置
   [params.app]
@@ -83,7 +88,7 @@ theme = "FixIt"
     tileColor = "#da532c"
     #  Android 浏览器主题色
     [params.app.themeColor]
-      light = "#ffffff"
+      light = "#f8f8f8"
       dark = "#252627"
 
   #  搜索配置
@@ -185,7 +190,7 @@ theme = "FixIt"
       # Gravatar 邮箱，用于优先在主页显示的头像
       gravatarEmail = ""
       # 主页显示头像的 URL
-      avatarURL = "/blogs/images/avatar.jpg"
+      avatarURL = "/blogs/avatar.jpg"
       #  主页显示的网站标题（支持 HTML 格式）
       title = "ctj12461's Blog"
       # 主页显示的网站副标题
@@ -296,6 +301,13 @@ theme = "FixIt"
     pageStyle = "normal"
     # 强制使用 Gravatar 作为作者头像
     gravatarForce = false
+    # 开启自动书签支持
+    # 如果为 true，则在关闭页面时保存阅读进度
+    autoBookmark = false
+    # 转载配置
+    [params.page.repost]
+      enable = false
+      url = ""
     #  目录配置
     [params.page.toc]
       # 是否使用目录
@@ -437,17 +449,19 @@ theme = "FixIt"
       [params.page.comment.waline]
         enable = false
         serverURL = ""
-        visitor = false
-        emoji = ['https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo']
-        meta = ['nick', 'mail', 'link']
+        pageview = false 
+        emoji = ["//unpkg.com/@waline/emojis@1.1.0/weibo"]
+        meta = ["nick", "mail", "link"]
         requiredMeta = []
-        login = 'enable'
+        login = "enable"
         wordLimit = 0
         pageSize = 10
-        uploadImage = false
-        highlight = true
-        mathTagSupport = false
-        commentCount = false
+        imageUploader = false
+        highlighter = false
+        comment = false
+        texRenderer = false
+        search = false
+        recaptchaV3Key = ""
       # Facebook 评论系统设置 (https://developers.facebook.com/docs/plugins/comments)
       [params.page.comment.facebook]
         enable = false
@@ -518,7 +532,10 @@ theme = "FixIt"
     cursorChar = "|"
     # 打字结束之后光标的持续时间（单位是毫秒，"-1" 代表无限大）
     duration = 4500
-
+  #  Mermaid 配置
+  [params.mermaid]
+    # 取值详见 https://mermaid-js.github.io/mermaid/#/Setup?id=theme
+    themes = ["neutral", "dark"]
   #  水印配置
   # 详细参数见 https://github.com/Lruihao/watermark#readme
   [params.watermark]
@@ -623,6 +640,37 @@ theme = "FixIt"
     # Gravatar 主机，默认：“www.gravatar.com”
     host = "www.gravatar.com" # "cn.gravatar.com", "gravatar.loli.net"
     style = "" # "", mp, identicon, monsterid, wavatar, retro, blank, robohash
+  
+  # 返回顶部
+  [params.backToTop]
+    enable = true
+    # 在 b2t 按钮中显示滚动百分比
+    scrollpercent = false
+
+  # 阅读进度条
+  [params.readingProgress]
+    enable = false
+    # 可用值：["left", "right"]
+    start = "left"
+    # 可用值：["top", "bottom"]
+    position = "top"
+    reversed = false
+    light = ""
+    dark = ""
+    height = "2px"
+
+  # 开发者选项
+  [params.dev]
+    enable = false
+    # 检查更新
+    c4u = false
+    # 请勿公开展示！
+    githubToken = ""
+    # 移动端开发者工具配置
+    [params.dev.mDevtools]
+      enable = false
+      # 支持 "vConsole", "eruda"
+      type = "vConsole"
 
 # Hugo 解析文档的配置
 [markup]
@@ -678,19 +726,29 @@ theme = "FixIt"
 
 # 用于输出 Markdown 格式文档的设置
 [mediaTypes]
-  [mediaTypes."text/plain"]
+  # 用于输出 Markdown 格式文档的设置
+  [mediaTypes."text/markdown"]
     suffixes = ["md"]
+  # 用于输出 txt 格式文档的设置
+  [mediaTypes."text/plain"]
+    suffixes = ["txt"]
 
-# 用于输出 Markdown 格式文档的设置
-[outputFormats.MarkDown]
-  mediaType = "text/plain"
-  isPlainText = true
-  isHTML = false
+[outputFormats]
+  # 用于输出 Markdown 格式文档的设置
+  [outputFormats.MarkDown]
+    mediaType = "text/markdown"
+    isPlainText = true
+    isHTML = false
+  # FixIt 0.2.15 | 新增 用于输出 baidu_urls.txt 文件的设置
+  [outputFormats.BaiduUrls]
+    baseName = "baidu_urls"
+    mediaType = "text/plain"
+    isPlainText = true
+    isHTML = false
 
 # 用于 Hugo 输出文档的设置
 [outputs]
-  #
-  home = ["HTML", "RSS", "JSON"]
+  home = ["HTML", "RSS", "JSON", "BaiduUrls"]
   page = ["HTML", "MarkDown"]
   section = ["HTML", "RSS"]
   taxonomy = ["HTML", "RSS"]

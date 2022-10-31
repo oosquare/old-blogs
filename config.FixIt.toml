@@ -15,17 +15,17 @@ theme = "FixIt"
   [[menu.main]]
     identifier = "posts"
     # 你可以在名称（允许 HTML 格式）之前添加其他信息，例如图标
-    pre = "<i class=\"fa fa-archive\" aria-hidden=\"true\"></i> "
+    pre = "<i class=\"fas fa-archive fa-fw fa-sm\"></i> "
     # 你可以在名称（允许 HTML 格式）之后添加其他信息，例如图标
     post = ""
-    name = "文章"
+    name = "所有文章"
     url = "/posts/"
     # 当你将鼠标悬停在此菜单链接上时，将显示的标题
     title = ""
     weight = 1
   [[menu.main]]
     identifier = "tags"
-    pre = "<i class=\"fa fa-tags\" aria-hidden=\"true\"></i> "
+    pre = "<i class=\"fas fa-tags fa-fw fa-sm\"></i> "
     post = ""
     name = "标签"
     url = "/tags/"
@@ -33,7 +33,7 @@ theme = "FixIt"
     weight = 2
   [[menu.main]]
     identifier = "categories"
-    pre = "<i class=\"fa fa-folder-open\" aria-hidden=\"true\"></i> "
+    pre = "<i class=\"fas fa-th fa-fw fa-sm\"></i> "
     post = ""
     name = "分类"
     url = "/categories/"
@@ -41,7 +41,7 @@ theme = "FixIt"
     weight = 3
   [[menu.main]]
     identifier = "about"
-    pre = "<i class=\"fa fa-info-circle\" aria-hidden=\"true\"></i> "
+    pre = "<i class=\"fas fa-info-circle fa-fw fa-sm\"></i> "
     post = ""
     name = "关于"
     url = "/about/"
@@ -68,6 +68,11 @@ theme = "FixIt"
   images = ["/logo.png"]
   #  开启 PWA 支持
   enablePWA = true
+  # 是否自动显示外链图标
+  externalIcon = false
+  # 默认情况下，FixIt 只会在主页的 HTML 头中注入主题元标记
+  # 您可以将其关闭，但如果您不这样做，我们将不胜感激，因为这是观察 FixIt 受欢迎程度上升的好方法
+  disableThemeInject = false
 
   #  应用图标配置
   [params.app]
@@ -83,7 +88,7 @@ theme = "FixIt"
     tileColor = "#da532c"
     #  Android 浏览器主题色
     [params.app.themeColor]
-      light = "#ffffff"
+      light = "#f8f8f8"
       dark = "#252627"
 
   #  搜索配置
@@ -146,6 +151,10 @@ theme = "FixIt"
     author = true
     # 网站创立年份
     since = 2022
+    # 网站创立时间
+    siteTime = '2022-02-04T18:00:00+08:00'
+    # 是否显示网站内容总字数
+    wordCount = true
     #  公网安备信息，仅在中国使用（支持 HTML 格式）
     gov = ""
     #  ICP 备案信息，仅在中国使用（支持 HTML 格式）
@@ -185,7 +194,7 @@ theme = "FixIt"
       #  主页显示的网站标题（支持 HTML 格式）
       title = "ctj12461's Blog"
       # 主页显示的网站副标题
-      subtitle = ""
+      subtitle = "当你想要放弃时，想想你为什么开始。"
       # 是否为副标题显示打字机动画
       typeit = true
       # 是否显示社交账号
@@ -243,7 +252,7 @@ theme = "FixIt"
     Strava = ""
     Skype = ""
     Whatsapp = ""
-    Zhihu = ""
+    Zhihu = "ctj12461"
     Douban = ""
     Angellist = ""
     Slidershare = ""
@@ -262,6 +271,7 @@ theme = "FixIt"
     XMPP = ""
     Matrix = ""
     Bilibili = "https://space.bilibili.com/456798748"
+    QQ = "1246186412"
     Email = "ctj12461@163.com"
     RSS = true #
 
@@ -287,6 +297,17 @@ theme = "FixIt"
     linkToMarkdown = false
     #  是否在 RSS 中显示全文内容
     rssFullText = true
+    # 页面样式 ("narrow", "normal", "wide", ...)
+    pageStyle = "normal"
+    # 强制使用 Gravatar 作为作者头像
+    gravatarForce = false
+    # 开启自动书签支持
+    # 如果为 true，则在关闭页面时保存阅读进度
+    autoBookmark = false
+    # 转载配置
+    [params.page.repost]
+      enable = false
+      url = ""
     #  目录配置
     [params.page.toc]
       # 是否使用目录
@@ -294,13 +315,27 @@ theme = "FixIt"
       #  是否保持使用文章前面的静态目录
       keepStatic = false
       # 是否使侧边目录自动折叠展开
-      auto = true
+      auto = false
+      # 目录位置 ("left", "right")
+      position = "right"
+    # 在文章开头显示提示信息，提醒读者文章内容可能过时
+    [params.page.expirationReminder]
+      enable = false
+      # 如果文章最后更新于这天数之前，显示提醒
+      reminder = 90
+      # 如果文章最后更新于这天数之前，显示警告
+      warning = 180
+      # 如果文章到期是否关闭评论
+      closeComment = false
     #  代码配置
     [params.page.code]
       # 是否显示代码块的复制按钮
       copy = true
       # 默认展开显示的代码行数
-      maxShownLines = 10
+      maxShownLines = 10000
+    [params.page.edit]
+      enable = false
+      url = "" # Link for fork & edit
     #  KaTeX 数学公式 (https://katex.org)
     [params.page.math]
       enable = true
@@ -410,6 +445,23 @@ theme = "FixIt"
         # 可以在你的项目下相同路径存放你自己的数据文件：
         # "assets/data/emoji/"
         emoji = ""
+      # Waline 评论系统设置 (https://waline.js.org)
+      [params.page.comment.waline]
+        enable = false
+        serverURL = ""
+        pageview = false 
+        emoji = ["//unpkg.com/@waline/emojis@1.1.0/weibo"]
+        meta = ["nick", "mail", "link"]
+        requiredMeta = []
+        login = "enable"
+        wordLimit = 0
+        pageSize = 10
+        imageUploader = false
+        highlighter = false
+        comment = false
+        texRenderer = false
+        search = false
+        recaptchaV3Key = ""
       # Facebook 评论系统设置 (https://developers.facebook.com/docs/plugins/comments)
       [params.page.comment.facebook]
         enable = false
@@ -439,6 +491,16 @@ theme = "FixIt"
         label = ""
         lightTheme = "github-light"
         darkTheme = "github-dark"
+      # 评论系统设置 (https://twikoo.js.org/)
+      [params.page.comment.twikoo]
+        enable = false
+        envId = ""
+        region = ""
+        path = ""
+        visitor = true
+        commentCount = true
+        # 当 `params.page.lightgallery` 启用时生效
+        lightgallery = false
     #  第三方库配置
     [params.page.library]
       [params.page.library.css]
@@ -463,14 +525,17 @@ theme = "FixIt"
   #  TypeIt 配置
   [params.typeit]
     # 每一步的打字速度（单位是毫秒）
-    speed = 100
+    speed = 120
     # 光标的闪烁速度（单位是毫秒）
     cursorSpeed = 1000
     # 光标的字符（支持 HTML 格式）
     cursorChar = "|"
     # 打字结束之后光标的持续时间（单位是毫秒，"-1" 代表无限大）
-    duration = -1
-
+    duration = 4500
+  #  Mermaid 配置
+  [params.mermaid]
+    # 取值详见 https://mermaid-js.github.io/mermaid/#/Setup?id=theme
+    themes = ["neutral", "dark"]
   #  水印配置
   # 详细参数见 https://github.com/Lruihao/watermark#readme
   [params.watermark]
@@ -501,8 +566,6 @@ theme = "FixIt"
     enable = true
     # 在文章中开启
     enablePost = false
-    # 网站创立时间 例：'2019-02-03T19:30:34+08:00'
-    siteTime = ''
 
   # 网站验证代码，用于 Google/Bing/Yandex/Pinterest/Baidu
   [params.verification]
@@ -558,6 +621,57 @@ theme = "FixIt"
     # 是否使用 object-fit-images 来兼容旧式浏览器
     objectFit = false
 
+  # 页面最后添加自定义 JS
+  # "_custom.js" 位于 "themes/FixIt/assets/js" 目录
+  # 可以在你的项目下相同路径存放你自己的自定义 JS 文件：
+  # "assets/js/_custom.js"
+  [params.customJS]
+    enable = true
+ 
+  # 在左上角或者右上角显示 GitHub 开源链接
+  [params.githubCorner]
+    enable = false
+    permalink = "https://github.com/ctj12461"
+    title = "Fork me on GitHub"
+    position = "right" # left, right
+
+  # Gravatar 设置
+  [params.gravatar]
+    # Gravatar 主机，默认：“www.gravatar.com”
+    host = "www.gravatar.com" # "cn.gravatar.com", "gravatar.loli.net"
+    style = "" # "", mp, identicon, monsterid, wavatar, retro, blank, robohash
+  
+  # 返回顶部
+  [params.backToTop]
+    enable = true
+    # 在 b2t 按钮中显示滚动百分比
+    scrollpercent = false
+
+  # 阅读进度条
+  [params.readingProgress]
+    enable = false
+    # 可用值：["left", "right"]
+    start = "left"
+    # 可用值：["top", "bottom"]
+    position = "top"
+    reversed = false
+    light = ""
+    dark = ""
+    height = "2px"
+
+  # 开发者选项
+  [params.dev]
+    enable = false
+    # 检查更新
+    c4u = false
+    # 请勿公开展示！
+    githubToken = ""
+    # 移动端开发者工具配置
+    [params.dev.mDevtools]
+      enable = false
+      # 支持 "vConsole", "eruda"
+      type = "vConsole"
+
 # Hugo 解析文档的配置
 [markup]
   # 语法高亮设置 (https://gohugo.io/content-management/syntax-highlighting)
@@ -612,19 +726,29 @@ theme = "FixIt"
 
 # 用于输出 Markdown 格式文档的设置
 [mediaTypes]
-  [mediaTypes."text/plain"]
+  # 用于输出 Markdown 格式文档的设置
+  [mediaTypes."text/markdown"]
     suffixes = ["md"]
+  # 用于输出 txt 格式文档的设置
+  [mediaTypes."text/plain"]
+    suffixes = ["txt"]
 
-# 用于输出 Markdown 格式文档的设置
-[outputFormats.MarkDown]
-  mediaType = "text/plain"
-  isPlainText = true
-  isHTML = false
+[outputFormats]
+  # 用于输出 Markdown 格式文档的设置
+  [outputFormats.MarkDown]
+    mediaType = "text/markdown"
+    isPlainText = true
+    isHTML = false
+  # FixIt 0.2.15 | 新增 用于输出 baidu_urls.txt 文件的设置
+  [outputFormats.BaiduUrls]
+    baseName = "baidu_urls"
+    mediaType = "text/plain"
+    isPlainText = true
+    isHTML = false
 
 # 用于 Hugo 输出文档的设置
 [outputs]
-  #
-  home = ["HTML", "RSS", "JSON"]
+  home = ["HTML", "RSS", "JSON", "BaiduUrls"]
   page = ["HTML", "MarkDown"]
   section = ["HTML", "RSS"]
   taxonomy = ["HTML", "RSS"]
