@@ -8,15 +8,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: /tmp/hugo_cache
-          key: ${{ runner.os }}-hugomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-hugomod-
-
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -31,10 +24,21 @@ jobs:
       - name: Build
         run: hugo --minify
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref == 'refs/heads/master' }}
+      - name: Clone Destination Repo
+        uses: sudosubin/git-clone-action@v1.0.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./public
+          repository: 'ctj12461/ctj12461.github.io'
+          platform: 'github'
+          path: 'dest'
+      
+      - run: cp -r ./public/* ./dest/blogs
+
+      - name: Deploy
+        uses: tech-thinker/push-to-repo@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GIT_PAT_TOKEN }}
+        with:
+          source-directory: 'dest'
+          destination-github-username: 'ctj12461'
+          destination-repository-name: 'ctj12461.github.io'
+          target-branch: main
