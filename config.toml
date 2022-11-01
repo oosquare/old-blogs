@@ -645,7 +645,7 @@ theme = "FixIt"
   [params.backToTop]
     enable = true
     # 在 b2t 按钮中显示滚动百分比
-    scrollpercent = false
+    scrollpercent = true
 
   # 阅读进度条
   [params.readingProgress]
@@ -714,7 +714,7 @@ theme = "FixIt"
 
 # Permalinks 配置 (https://gohugo.io/content-management/urls#permalinks)
 [Permalinks]
-  posts = "contents/:year:month:day-:filename"
+  posts = "contents/:year/:filename"
 #   posts = ":filename"
 
 # 隐私信息配置 (https://gohugo.io/about/hugo-and-gdpr/)
