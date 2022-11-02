@@ -27,11 +27,11 @@ jobs:
       - name: Clone Destination Repo
         uses: sudosubin/git-clone-action@v1.0.1
         with:
-          repository: 'ctj12461/ctj12461.github.io'
+          repository: 'ctj12461/site-output'
           platform: 'github'
           path: 'dest'
       
-      - run: cp -r ./public/* ./dest/blogs
+      - run: cp -rf ./public/* ./dest/
 
       - name: Deploy
         uses: tech-thinker/push-to-repo@main
@@ -40,5 +40,5 @@ jobs:
         with:
           source-directory: 'dest'
           destination-github-username: 'ctj12461'
-          destination-repository-name: 'ctj12461.github.io'
+          destination-repository-name: 'site-output'
           target-branch: main
