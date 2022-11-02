@@ -1,4 +1,4 @@
-baseURL = "https://ctj12461.github.io/blogs"
+baseURL = "https://ctj12461.netlify.app"
 # [en, zh-cn, fr, ...] 设置默认的语言
 defaultContentLanguage = "zh-cn"
 # 网站语言，仅在这里 CN 大写
@@ -40,13 +40,21 @@ theme = "FixIt"
     title = ""
     weight = 3
   [[menu.main]]
+    identifier = "notes"
+    pre = "<i class=\"fas fa-book-open fa-fw fa-sm\"></i> "
+    post = ""
+    name = "笔记"
+    url = "/notes/"
+    title = ""
+    weight = 4
+  [[menu.main]]
     identifier = "about"
     pre = "<i class=\"fas fa-info-circle fa-fw fa-sm\"></i> "
     post = ""
     name = "关于"
     url = "/about/"
     title = ""
-    weight = 4
+    weight = 5
 
 [params]
   #  FixIt 主题版本
@@ -190,7 +198,7 @@ theme = "FixIt"
       # Gravatar 邮箱，用于优先在主页显示的头像
       gravatarEmail = ""
       # 主页显示头像的 URL
-      avatarURL = "/blogs/avatar.jpg"
+      avatarURL = "/avatar.jpg"
       #  主页显示的网站标题（支持 HTML 格式）
       title = "ctj12461's Blog"
       # 主页显示的网站副标题

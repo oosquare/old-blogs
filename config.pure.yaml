@@ -1,4 +1,4 @@
-baseURL: "https://ctj12461.github.io/blogs"
+baseURL: "https://ctj12461.netlify.app"
 theme: pure
 title: "ctj12461's Blog"
 copyright: "CC BY-NC 4.0"
