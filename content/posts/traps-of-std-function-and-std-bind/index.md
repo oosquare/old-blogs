@@ -3,7 +3,7 @@ title: "std::function 和 std::bind 的使用陷阱"
 subtitle: ""
 date: 2022-03-29T18:21:31+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

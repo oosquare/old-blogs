@@ -3,7 +3,7 @@ title: "Arch Linux 常用软件配置"
 subtitle: ""
 date: 2022-03-17T22:28:02+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

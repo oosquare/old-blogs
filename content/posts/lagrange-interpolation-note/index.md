@@ -3,7 +3,7 @@ title: "拉格朗日插值学习笔记"
 subtitle: ""
 date: 2022-02-07T23:53:43+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

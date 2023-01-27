@@ -4,7 +4,7 @@ title: "Minecraft 运动学研究"
 subtitle: ""
 date: 2022-08-06T21:06:58+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 authorEmail: ""
 description: ""

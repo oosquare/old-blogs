@@ -4,7 +4,7 @@ title: "Hugo 添加 Netlify CMS 支持"
 subtitle: ""
 date: 2022-05-04T21:15:39+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 authorEmail: ""
 description: ""

@@ -3,7 +3,7 @@ title: "AtCoder ARC 073E Ball Coloring 题解"
 subtitle: ""
 date: 2022-04-15T23:39:44+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

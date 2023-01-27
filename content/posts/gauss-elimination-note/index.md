@@ -3,7 +3,7 @@ title: "高斯消元学习笔记"
 subtitle: ""
 date: 2022-02-06T16:06:35+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

@@ -2,7 +2,7 @@
 title: "MultiGenerator 使用文档"
 date: 2022-04-04T22:15:15+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

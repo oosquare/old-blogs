@@ -3,7 +3,7 @@ title: "Luogu P3647 连珠线题解"
 subtitle: ""
 date: 2022-02-04T19:41:12+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""

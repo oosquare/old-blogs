@@ -3,7 +3,7 @@ title: "同余方程学习笔记"
 subtitle: ""
 date: 2022-02-13T21:40:02+08:00
 draft: false
-author: ""
+author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""
