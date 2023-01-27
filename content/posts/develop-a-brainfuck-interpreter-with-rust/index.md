@@ -1,5 +1,5 @@
 ---
-title: "用 Rust 开发 Brainfuck 解释器"
+title: "用 Rust 开发 brainfuck 解释器"
 subtitle: ""
 date: 2023-01-26T22:26:51+08:00
 draft: false
@@ -14,7 +14,7 @@ weight: 0
 
 tags:
 - Rust
-- Brainfuck
+- brainfuck
 - CLI
 categories:
 - Tech
@@ -46,7 +46,7 @@ repost:
 
 项目地址：<https://github.com/ctj12461/brainfuck-interpreter>
 
-Brainfuck 是什么就不具体介绍了，可以看[这里]()。
+Brainfuck 是什么就不具体介绍了，可以看[这里](https://esolangs.org/wiki/brainfuck)。
 
 这个解释器实现总体上是比较简单的，但是相比其他的大多数解释器还是有比较多的不同之处，具体如下：
 
@@ -60,11 +60,31 @@ Brainfuck 是什么就不具体介绍了，可以看[这里]()。
 
 这个项目可以算是学习 Rust 的练手项目，尝试着用了如 clap 这样的 crate。接下来就介绍一些技术细节。
 
+## 使用方法
+
+具体说明在项目 [README](https://github.com/ctj12461/brainfuck-interpreter#readme).
+
+编译、安装、执行全过程：
+
+```bash
+$ git clone https://github.com/ctj12461/brainfuck-interpreter.git
+$ cd brainfuck-interpreter
+$ cargo install --path . # The program will be installed to ~/.cargo/bin
+$ brainfuck-interpreter ./examples/helloworld.bf
+Hello World!
+```
+
+`./examples/helloworld.bf`：
+
+```brainfuck
+++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.
+```
+
 ## 实现原理
 
 程序大体上是按照如下流程进行：
 
-1. 通过 clap 解析命令行参数，获得 Brainfuck 程序代码以及解释器的配置
+1. 通过 clap 解析命令行参数，获得 brainfuck 程序代码以及解释器的配置
 2. 把代码交给 `lexer` 处理，去除无关字符，把每个字符转换成枚举，同时把一些可以合并的字符合并（如 `+++--` 合并为 `+`），获得 `TokenList`
 3. 把 `TokenList` 交给 `parser` 处理，检查语法正确性并构建 AST，程序中叫 `SyntaxTree`
 4. 编译出字节码
@@ -257,3 +277,368 @@ impl SyntaxTree {
     }
 }
 ```
+
+### 运行
+
+接下来把 `SyntaxTree` 编译为 `InstructionList`，以下为类型定义：
+
+```rust
+#[derive(Debug, PartialEq, Eq)]
+pub enum Instruction {
+    Add(i32),
+    Seek(isize),
+    Input,
+    Output,
+    Jump(usize), // Jump to the target without conditions
+    JumpIfZero(usize), // Jump if the value in the current cell is `0`
+    Halt, // Indicate the end of execution
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct InstructionList(pub Vec<Instruction>);
+```
+
+转换的具体处理就省略了，就是简单的前序遍历。
+
+然后来看 `Memory`:
+
+```rust
+pub struct Memory {
+    memory: Vec<i32>,
+    cur: isize,
+    addr_strategy: Box<dyn AddrStrategy>,
+    cell_strategy: Box<dyn CellStrategy>,
+    eof_strategy: Box<dyn EofStrategy>,
+    overflow_strategy: Box<dyn OverflowStrategy>,
+}
+
+impl Memory {
+    pub fn new(
+        addr_strategy: Box<dyn AddrStrategy>,
+        cell_strategy: Box<dyn CellStrategy>,
+        eof_strategy: Box<dyn EofStrategy>,
+        overflow_strategy: Box<dyn OverflowStrategy>,
+    ) -> Self {
+        let memory = vec![0; addr_strategy.range().len()];
+        let cur = addr_strategy.initial();
+        Self {
+            memory,
+            cur,
+            addr_strategy,
+            cell_strategy,
+            eof_strategy,
+            overflow_strategy,
+        }
+    }
+
+    pub fn seek(&mut self, offset: isize) -> Result<()> {
+        self.cur = self.addr_strategy.seek(self.cur, offset)?;
+        Ok(())
+    }
+
+    pub fn position(&self) -> isize {
+        self.cur
+    }
+
+    pub fn add(&mut self, add: i32) -> Result<()> {
+        let addr = self.addr_strategy.calc(self.cur);
+        let target = self.memory.get_mut(addr).unwrap();
+        let strategy = self.cell_strategy.as_ref();
+        let res = self.overflow_strategy.add(strategy, *target, add)?;
+        *target = res;
+        Ok(())
+    }
+
+    pub fn set(&mut self, val: i8) {
+        let addr = self.addr_strategy.calc(self.cur);
+        let target = self.memory.get_mut(addr).unwrap();
+
+        if let Some(res) = self.eof_strategy.check(val) {
+            *target = res as i32;
+        }
+    }
+
+    pub fn get(&self) -> i32 {
+        self.memory[self.addr_strategy.calc(self.cur)]
+    }
+}
+```
+
+其中的 `cur` 是相对于 brainfuck 的，如果要访问实际的内存，需要进行转换。
+
+为了实现简单，不管对于 brainfuck 来说内存是什么数据类型，底层均使用 `Vec<i32>` 进行存储，只是在操作是加上判断。
+
+这里为了实现多种配置，使用了策略模式，比如 `AddrStrategy` 就是表示地址范围的特征，它有两个实现 `UnsignedAddrStrategy` 与 `SignedAddrStrategy`。
+
+```rust
+pub trait AddrStrategy {
+    /// Return the initial value the pointer should contain.
+    fn initial(&self) -> isize {
+        0
+    }
+
+    /// Calculate `addr + offset`. Return `None` when `addr + offset` is out of bounds.
+    fn seek(&self, addr: isize, offset: isize) -> Result<isize>;
+
+    /// Calculate the actual address.
+    fn calc(&self, addr: isize) -> usize;
+
+    /// Get the abstract address range.
+    fn range(&self) -> AddrRange;
+}
+
+pub struct UnsignedAddrStrategy {
+    len: usize,
+}
+
+impl UnsignedAddrStrategy {
+    pub fn new(len: usize) -> Self {
+        Self { len }
+    }
+}
+
+impl AddrStrategy for UnsignedAddrStrategy {
+    fn seek(&self, addr: isize, offset: isize) -> Result<isize> {
+        let target = addr + offset;
+
+        if 0 <= target && target < self.len as isize {
+            Ok(target)
+        } else {
+            Err(MemoryError::OutOfBounds {
+                now_position: addr,
+                offset,
+                range: self.range(),
+            })
+        }
+    }
+
+    fn calc(&self, addr: isize) -> usize {
+        addr as usize
+    }
+
+    fn range(&self) -> AddrRange {
+        AddrRange {
+            left: 0,
+            right: self.len as isize - 1,
+        }
+    }
+}
+
+pub struct SignedAddrStrategy {
+    half_len: usize,
+}
+
+impl SignedAddrStrategy {
+    pub fn new(half_len: usize) -> Self {
+        Self { half_len }
+    }
+}
+
+impl AddrStrategy for SignedAddrStrategy {
+    fn seek(&self, addr: isize, offset: isize) -> Result<isize> {
+        let target = addr + offset;
+
+        if -(self.half_len as isize) <= target && target < self.half_len as isize {
+            Ok(target)
+        } else {
+            Err(MemoryError::OutOfBounds {
+                now_position: addr,
+                offset,
+                range: self.range(),
+            })
+        }
+    }
+
+    fn calc(&self, addr: isize) -> usize {
+        addr as usize + self.half_len
+    }
+
+    fn range(&self) -> AddrRange {
+        AddrRange {
+            left: -(self.half_len as isize),
+            right: self.half_len as isize - 1,
+        }
+    }
+}
+```
+
+其他的策略可以看[源码](https://github.com/ctj12461/brainfuck-interpreter/blob/master/src/interpreter/memory/strategy/mod.rs)。
+
+然后就是具体执行的 `Processor`，其模拟了一个 CPU 的执行：
+
+```rust
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum ProcessorState {
+    Ready,
+    Running,
+    Halted,
+    Failed,
+}
+
+pub struct Processor {
+    counter: Counter,
+    instructions: InstructionList,
+    memory: Memory,
+    in_stream: Box<dyn InStream>,
+    out_stream: Box<dyn OutStream>,
+    state: ProcessorState,
+}
+
+impl Processor {
+    pub fn new(
+        instructions: InstructionList,
+        memory: Memory,
+        in_stream: Box<dyn InStream>,
+        out_stream: Box<dyn OutStream>,
+    ) -> Self {
+        Self {
+            counter: Counter::new(),
+            instructions,
+            memory,
+            in_stream,
+            out_stream,
+            state: ProcessorState::Ready,
+        }
+    }
+
+    pub fn counter(&self) -> usize {
+        self.counter.get()
+    }
+
+    pub fn memory(&self) -> &Memory {
+        &self.memory
+    }
+
+    pub fn state(&self) -> ProcessorState {
+        self.state
+    }
+
+    fn abort(&mut self) {
+        self.state = ProcessorState::Failed;
+    }
+
+    fn tick(&mut self) {
+        self.counter.tick();
+        self.check_halted();
+    }
+
+    fn check_halted(&mut self) {
+        if self.instructions.0[self.counter.get()] == Instruction::Halt {
+            self.state = ProcessorState::Halted;
+        }
+    }
+
+    pub fn step(&mut self) -> Result<()> {
+        match self.state {
+            ProcessorState::Halted => return Err(ProcessorError::AlreadyHalted),
+            ProcessorState::Failed => return Err(ProcessorError::Failed),
+            _ => {}
+        }
+
+        match self.instructions.0[self.counter.get()] {
+            Instruction::Add(val) => {
+                if let Err(e) = self.memory.add(val) {
+                    self.abort();
+                    Err(e.into())
+                } else {
+                    self.tick();
+                    Ok(())
+                }
+            }
+            Instruction::Seek(offset) => {
+                if let Err(e) = self.memory.seek(offset) {
+                    self.abort();
+                    Err(e.into())
+                } else {
+                    self.tick();
+                    Ok(())
+                }
+            }
+            Instruction::Input => {
+                self.memory.set(self.in_stream.read());
+                self.tick();
+                Ok(())
+            }
+            Instruction::Output => {
+                self.out_stream.write(self.memory.get());
+                self.tick();
+                Ok(())
+            }
+            Instruction::Jump(target) => {
+                self.counter.jump(target);
+                self.check_halted();
+                Ok(())
+            }
+            Instruction::JumpIfZero(target) => {
+                if self.memory.get() == 0 {
+                    self.counter.jump(target);
+                    self.check_halted();
+                } else {
+                    self.tick();
+                }
+
+                Ok(())
+            }
+            Instruction::Halt => {
+                unreachable!()
+            }
+        }
+    }
+
+    pub fn run(&mut self) -> Result<()> {
+        match self.state {
+            ProcessorState::Halted => return Err(ProcessorError::AlreadyHalted),
+            ProcessorState::Failed => return Err(ProcessorError::Failed),
+            _ => {}
+        }
+
+        while self.state == ProcessorState::Ready || self.state == ProcessorState::Running {
+            self.step()?
+        }
+
+        Ok(())
+    }
+}
+```
+
+整体上就是比较简单的模拟。对于中间出现的错误，直接返回，并且把 `Processor` 的状态设置为 `Failed`，不再可用。
+
+有了这些，就可以组装出一个 `Interpreter`，这个也不放代码了。
+
+### 错误处理
+
+利用 snafu 来化简错误定义，只要通过给错误添加 `#[derive(Snafu)]`、给错误的枚举项添加 `#[snafu(display("..."))]` 就可以自动实现 `Display`，这与 thiserror 类似。
+
+错误采用层层包装的方式传播给上层，最后在 `main()` 里全部输出。
+
+我个人认为使用每一个模块定义一个错误并包装下层错误的方式会更好，即使是在二进制 crate 中，这样返回错误的方式能够保留错误的发出路径，而使用 `Box<dyn Error>` 或者 anyhow crate 就只能保留最底层的错误消息，缺少了层次。
+
+比如运行 `brainfuck-interpreter --overflow error ./examples/squares.bf`，最终的错误信息是：
+
+```plain
+error: an error occured when running the code
+caused by: invalid memory operation occured
+caused by: 127 + 1 will overflow
+```
+
+相比一行的 `error: 127 + 1 will overflow` 就更加清晰。
+
+为了实现这样的功能，只要在输出本层级错误信息时加上 `\ncaused by: {source}` 即可，比如下面：
+
+```rust
+#[derive(Snafu, Debug, PartialEq, Eq)]
+pub enum InterpreterError {
+    #[snafu(display("couldn't parse the code\ncaused by: {source}"))]
+    Parse { source: ParseError },
+    #[snafu(display("an error occured when running the code\ncaused by: {source}"))]
+    Runtime { source: ProcessorError },
+    #[snafu(display("the program hasn't been loaded yet"))]
+    Uninitialized,
+}
+```
+
+输出最顶层错误时用 `eprintln!("error: {e}")` 即可。
+
+### 其他
+
+这个解释器其实还有很多优化空间，比如可以对一些特定的 brainfuck 代码做优化，如 `[-]` 就是把当前位清零，`[->+<]` 就是把当前单元清零，并把其中的值都加到地址加一的单元里。如果完善这些优化，执行速度应该会有巨大的提升。另外可以考虑做一个 REPL，如果实现了应该就是第一个实现 brainfuck REPL 的项目了。
