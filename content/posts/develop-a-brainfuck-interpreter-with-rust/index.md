@@ -46,7 +46,7 @@ repost:
 
 项目地址：<https://github.com/ctj12461/brainfuck-interpreter>
 
-Brainfuck 是什么就不具体介绍了，可以看[这里](https://esolangs.org/wiki/brainfuck)。
+Brainfuck 是什么就不具体介绍了，可以看[这里](https://esolangs.org/wiki/brainfuck)。以下简称 bf。
 
 这个解释器实现总体上是比较简单的，但是相比其他的大多数解释器还是有比较多的不同之处，具体如下：
 
@@ -69,8 +69,8 @@ Brainfuck 是什么就不具体介绍了，可以看[这里](https://esolangs.or
 ```bash
 $ git clone https://github.com/ctj12461/brainfuck-interpreter.git
 $ cd brainfuck-interpreter
-$ cargo install --path . # The program will be installed to ~/.cargo/bin
-$ brainfuck-interpreter ./examples/helloworld.bf
+$ cargo install --path ./crates/bf-exec # The program will be installed to ~/.cargo/bin
+$ bf-exec ./examples/helloworld.bf
 Hello World!
 ```
 
@@ -82,563 +82,328 @@ Hello World!
 
 ## 实现原理
 
-程序大体上是按照如下流程进行：
+目前，项目分为两个 crate：`common` 与 `bf-exec`，其中 `common` 实现了解释器的所有逻辑，而 `bf-exec` 是 `common` 的前端，负责处理输入和配置。
 
-1. 通过 clap 解析命令行参数，获得 brainfuck 程序代码以及解释器的配置
-2. 把代码交给 `lexer` 处理，去除无关字符，把每个字符转换成枚举，同时把一些可以合并的字符合并（如 `+++--` 合并为 `+`），获得 `TokenList`
-3. 把 `TokenList` 交给 `parser` 处理，检查语法正确性并构建 AST，程序中叫 `SyntaxTree`
-4. 编译出字节码
-5. 构建 `Interpreter` 实例，用于执行字节码，其中包含 `Memory`，`InStream/OutStream`，`Processor`，分别负责内存读写、IO、真正执行指令
-6. 中间可能返回错误，因为大多数是外部原因造成的错误，所以错误都返回到 `main()` 中处理，其实也就只能打印错误了
+`common` 的模块树如下：
+
+- `complier`：解析代码并转换为 `IR (Intermediate Representation，中间表示)`
+  - `lexer`：词法分析
+  - `parser`：语法分析并优化，生成 AST `SyntaxTree`
+    - `syntax`：AST 生成
+    - `optimizer`：AST 优化
+  - `instruction`：根据 AST 生成 `IR`，同时也是最终执行的指令
+- `execution`：`IR` 的执行与相关环境
+  - `memory`：按照 bf 的内存模型实现的可配置内存
+    - `strategy`：基于策略模式实现的可配置组件
+    - `config`：构建 `Memory` 的配置
+  - `stream`：bf 的 IO 实现
+    - `config`：构建 `InStream`、`OutStream` 的配置
+  - `context`：`Memory` 与 `InStream`、`OutStream` 的组合
+  - `processor`：运行指令，并调用 `Context`
 
 ## 实现细节
 
-### 词法分析
+### 代码优化
 
-这里定义了几个类型：
+#### 同质代码合并
 
-```rust
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SingleToken {
-    GreaterThan,
-    LessThan,
-    Add,
-    Sub,
-    Dot,
-    Comma,
-    LeftBracket,
-    RightBracket,
-}
+首先最简单的就是这个优化，它是指把相邻的 `+` 与 `-`、`<` 与 `>` 合并到一起并加上一个重复次数。
 
-type SingleTokenList = Vec<SingleToken>;
+为了方便，把 `-` 当作重复次数是 `-1` 的 `+`，把 `<` 当作重复次数是 `-1` 的 `>`。
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Token {
-    pub token: SingleToken,
-    pub count: i32,
-}
+这个优化虽然简单，但是非常有效，绝大多数的 bf 程序中这四个的占比是很大的，考虑到有循环，一般是多项式级别的优化。
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct TokenList(pub Vec<Token>);
-```
+#### 清零优化
 
-`SingleToken` 是分割字符再转换得到的东西，然后对 `SingleTokenList` 进行压缩得到 `TokenList`。
+在 bf 中，`[-]` 可以理解为把当前指针指向的数据清零，还有一个 `[+]`，但是需要使用溢出。
 
-压缩时可以把相邻的 `+` 与 `-` 都变成一个 `+` 与其重复次数，`<` 与 `>` 同理，后续的字节码就可以直接一步到位，而不是一个一个运行。这里的重复次数可以是负数，这样可以简化整个模型。
-
-为了后续构建 AST 更方便，我选择不合并 `[` 与 `]`，因为构建 AST 采用递归，并且是用迭代器一个一个读字符，如果合并，要么在不移动迭代器的情况下将 `count` 减一，要么一下子进行多层递归，这些都很麻烦。
-
-这里给出部分合并代码，每一部分都是类似的：
+我们在 `SyntaxTree` 上进行操作，`SyntaxTree` 定义如下：
 
 ```rust
-impl TokenList {
-    /// Combine the same tokens (except `[` and ']') into a `Token`
-    /// which contains the count of them.
-    fn combine_same(tokens: SingleTokenList) -> TokenList {
-        let mut res = vec![];
-        let mut last = None::<SingleToken>;
-        let mut now = None::<Token>;
+// crates/common/src/compiler/parser/syntax/mod.rs
 
-        for token in tokens {
-            if let None = last {
-                now = Some(Token::new(token, 1));
-            } else if let Some(last) = last {
-                if last == token
-                    && token != SingleToken::LeftBracket
-                    && token != SingleToken::RightBracket
-                {
-                    now.as_mut().unwrap().count += 1;
-                } else {
-                    res.push(now.take().unwrap());
-                    now = Some(Token::new(token, 1));
-                }
-            }
-
-            last = Some(token);
-        }
-
-        if let Some(now) = now.take() {
-            res.push(now);
-        }
-
-        TokenList(res)
-    }
-
-    /// Combine `SingleToken::Add` and `SingleToken::Sub`. When it comes to
-    /// `(SingleToken::Sub, 1)`, we turn it into `(SingleToken::Add, -1)`.
-    fn combine_add_sub(self) -> TokenList {
-        // snip
-    }
-
-    /// Combine `SingleToken::LessThan` and `SingleToken::GreaterThan`. When it comes to
-    /// `(SingleToken::LessThan, 1)`, we turn it into `(SingleToken::GreaterThan, -1)`.
-    fn combine_less_greater(self) -> TokenList {
-        // snip
-    }
-}
-
-impl From<SingleTokenList> for TokenList {
-    /// Combine the similar and adjacent tokens, such as `[Token::Add, Token::Add,
-    /// Token::Sub]` to `[(Token::Add, 1)]`.
-    fn from(tokens: SingleTokenList) -> TokenList {
-        TokenList::combine_same(tokens)
-            .combine_add_sub()
-            .combine_less_greater()
-    }
-}
-```
-
-### 语法分析
-
-```rust
 #[derive(Debug, PartialEq, Eq)]
 pub enum SyntaxTree {
-    Add(i32),
-    Seek(i32),
-    Input,
-    Output,
-    Root(Vec<SyntaxTree>),
-    Loop(Vec<SyntaxTree>),
+    Add { val: i32 }, // `+`, `-`
+    Seek { offset: i32 }, // `<`, `>`
+    Clear,
+    AddUntilZero { target: Vec<AddUntilZeroArg> },
+    Input, // `,`
+    Output, // `.`
+    Root { block: Vec<SyntaxTree> },
+    Loop { block: Vec<SyntaxTree> }, // `[]` block
 }
 ```
 
-首先定义了 `SyntaxTree` 枚举作为 AST 的结点类型，可以发现这里又没有 `count` 来标记重复次数了，原因是 `Add` 与 `Seek` 已经优化为无需重复的版本，而如 `Input` 和 `Output`，即使放入循环也没办法优化什么，再如 `Loop` 本身作为控制流，也不可以简单重复，所以 `count` 就没有存在的必要了。
-
-然后定义了一个 `ParseError`，这里使用了 snafu crate 来方便定义错误：
+考虑到还有其他的优化，我们定义一个 `trait` 用来表示优化的行为，以及 `Optimizer`，负责遍历 `SyntaxTree`。
 
 ```rust
-#[derive(Snafu, Debug, PartialEq, Eq)]
-pub enum ParseError {
-    #[snafu(display("unpaired `[` was found, and expect another `]`"))]
-    UnpairedLeftBracket,
-    #[snafu(display("unpaired `]` was found, and expect another `[`"))]
-    UnpairedRightBracket,
+// crates/common/src/compiler/parser/optimizer/mod.rs
+
+pub trait Rule {
+    /// Return the optimized `SyntaxTree` or the original one.
+    fn apply(&self, block: SyntaxTree) -> SyntaxTree;
 }
-```
 
-接着就是解析并生成 `SyntaxTree` 了：
+pub struct Optimizer {
+    rules: Vec<Box<dyn Rule>>,
+}
 
-```rust
-impl SyntaxTree {
-    pub(super) fn parse(tokens: TokenList) -> Result<SyntaxTree> {
-        let mut current = tokens.0.into_iter();
-        let mut left_bracket_count = 0;
-        let block = SyntaxTree::parse_impl(&mut current, &mut left_bracket_count)?;
-        Ok(SyntaxTree::Root(block))
-    }
-
-    fn parse_impl<I>(current: &mut I, left_bracket_count: &mut i32) -> Result<Vec<SyntaxTree>>
-    where
-        I: Iterator<Item = Token>,
-    {
-        let mut res: Vec<SyntaxTree> = vec![];
-
-        loop {
-            if let Some(Token { token, count }) = current.next() {
-                match token {
-                    SingleToken::Add => res.push(SyntaxTree::Add(count)),
-                    SingleToken::GreaterThan => res.push(SyntaxTree::Seek(count)),
-                    SingleToken::Comma => {
-                        for _ in 0..count {
-                            res.push(SyntaxTree::Input)
-                        }
-                    }
-                    SingleToken::Dot => {
-                        for _ in 0..count {
-                            res.push(SyntaxTree::Output)
-                        }
-                    }
-                    SingleToken::LeftBracket => {
-                        *left_bracket_count += 1;
-                        let block = SyntaxTree::parse_impl(current, left_bracket_count)?;
-                        res.push(SyntaxTree::Loop(block))
-                    }
-                    SingleToken::RightBracket => {
-                        *left_bracket_count -= 1;
-                        ensure!(*left_bracket_count >= 0, UnpairedRightBracketSnafu);
-                        break;
-                    }
-                    // Both `SingleToken::Sub` and `SingleToken::LessThan` have been
-                    // converted to `SingleToken::Add` and `SingleToken::GreaterThan`.
-                    SingleToken::Sub | SingleToken::LessThan => unreachable!(),
-                }
-            } else {
-                if *left_bracket_count == 0 {
-                    break;
-                } else if *left_bracket_count > 0 {
-                    return Err(ParseError::UnpairedLeftBracket);
-                }
-                // It's impossible to reach where `left_bracket_count < 0`, for it has
-                // been already checked above.
-            }
+impl Optimizer {
+    pub fn optimize(&self, mut tree: SyntaxTree) -> SyntaxTree {
+        for rule in &self.rules {
+            tree = rule.apply(tree);
         }
 
-        Ok(res)
+        match tree {
+            SyntaxTree::Root { block } => SyntaxTree::Root {
+                block: block.into_iter().map(|tree| self.optimize(tree)).collect(),
+            },
+            SyntaxTree::Loop { block } => SyntaxTree::Loop {
+                block: block.into_iter().map(|tree| self.optimize(tree)).collect(),
+            },
+            otherwise => otherwise,
+        }
     }
+
+    // ...
 }
 ```
 
-### 运行
-
-接下来把 `SyntaxTree` 编译为 `InstructionList`，以下为类型定义：
+接下来实现也很简单：
 
 ```rust
+// crates/common/src/compiler/parser/optimizer/mod.rs
+
+pub struct ClearRule;
+
+impl ClearRule {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Rule for ClearRule {
+    fn apply(&self, block: SyntaxTree) -> SyntaxTree {
+        match block {
+            SyntaxTree::Loop { block } => {
+                if block.len() == 1 && block[0] == (SyntaxTree::Add { val: -1 }) {
+                    SyntaxTree::Clear
+                } else {
+                    SyntaxTree::Loop { block }
+                }
+            }
+            otherwise => otherwise,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clear_rule() {
+        let mut optimizer = Optimizer::new();
+        optimizer.add_rule(Box::new(ClearRule::new()));
+
+        let tree = SyntaxTree::Root {
+            block: vec![
+                SyntaxTree::Input,
+                SyntaxTree::Loop {
+                    block: vec![SyntaxTree::Add { val: -1 }],
+                },
+            ],
+        };
+
+        let tree = optimizer.optimize(tree);
+
+        let expected = SyntaxTree::Root {
+            block: vec![SyntaxTree::Input, SyntaxTree::Clear],
+        };
+
+        assert_eq!(tree, expected);
+    }
+
+    // ...
+}
+```
+
+#### 计数器优化
+
+在 bf 中，把一个单元作为计算器，然后在一个循环中递减它并做其他操作是很正常的事，如果循环中只有 `+`、`-`、`<`、`>`，那么就可以直接计算出这个循环结束后的结果。因为计数器最终被减为 0，且在循环中都是加法，所以我称这个优化叫做 `AddUntilZeroRule`。
+
+比如最简单的 `[->+<]`，它代表递减计数器，并每次递增计数器右边第 1 个单元。
+
+在比如 `[->++>+<<<->]`，它代表递减计数器，并每次给计数器右边第 1 个单元加 2、给右边第 2 个单元加 1、给左边第 1 个单元减 1。
+
+从中可以发现一个规律：每个循环体都是一个 `-` 开头，用于递减计数器，然后移动指针，对某些单元进行加减，最后指针都会被移动到计数器的位置。由此就知道如何计算循环结束后的结果了。
+
+为了简化问题，如果循环非开头位置出现了指针指向计数器并进行操作的情况，那么就放弃优化，比如 `[-->+<]`，计数器是每次循环减 2。选择放弃优化的原因很简单，因为这会使得循环结束的判断变复杂，并且没有人会这么写。
+
+实现如下：
+
+```rust
+// crates/common/src/compiler/parser/syntax/mod.rs
+
 #[derive(Debug, PartialEq, Eq)]
-pub enum Instruction {
-    Add(i32),
-    Seek(isize),
-    Input,
-    Output,
-    Jump(usize), // Jump to the target without conditions
-    JumpIfZero(usize), // Jump if the value in the current cell is `0`
-    Halt, // Indicate the end of execution
+pub struct AddUntilZeroArg {
+    pub offset: isize,
+    pub times: i32,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct InstructionList(pub Vec<Instruction>);
-```
-
-转换的具体处理就省略了，就是简单的前序遍历。
-
-然后来看 `Memory`:
-
-```rust
-pub struct Memory {
-    memory: Vec<i32>,
-    cur: isize,
-    addr_strategy: Box<dyn AddrStrategy>,
-    cell_strategy: Box<dyn CellStrategy>,
-    eof_strategy: Box<dyn EofStrategy>,
-    overflow_strategy: Box<dyn OverflowStrategy>,
+impl AddUntilZeroArg {
+    pub fn new(offset: isize, times: i32) -> Self {
+        Self { offset, times }
+    }
 }
 
-impl Memory {
-    pub fn new(
-        addr_strategy: Box<dyn AddrStrategy>,
-        cell_strategy: Box<dyn CellStrategy>,
-        eof_strategy: Box<dyn EofStrategy>,
-        overflow_strategy: Box<dyn OverflowStrategy>,
-    ) -> Self {
-        let memory = vec![0; addr_strategy.range().len()];
-        let cur = addr_strategy.initial();
-        Self {
-            memory,
-            cur,
-            addr_strategy,
-            cell_strategy,
-            eof_strategy,
-            overflow_strategy,
+// crates/common/src/compiler/parser/optimizer/mod.rs
+
+pub struct AddUntilZeroRule;
+
+impl AddUntilZeroRule {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Rule for AddUntilZeroRule {
+    fn apply(&self, block: SyntaxTree) -> SyntaxTree {
+        let block = match block {
+            SyntaxTree::Loop { block } => block,
+            otherwise => return otherwise,
+        };
+
+        // Check whether the first character in code is `-`.
+        match block.get(0) {
+            Some(SyntaxTree::Add { val: -1 }) => (),
+            _ => return SyntaxTree::Loop { block },
         }
-    }
 
-    pub fn seek(&mut self, offset: isize) -> Result<()> {
-        self.cur = self.addr_strategy.seek(self.cur, offset)?;
-        Ok(())
-    }
+        let mut current_offset = 0;
+        let mut target = Vec::with_capacity(block.len() / 2);
 
-    pub fn position(&self) -> isize {
-        self.cur
-    }
+        for statement in block.iter().skip(1) {
+            match statement {
+                SyntaxTree::Add { val } => {
+                    // Optimization fails if the program tries to change the
+                    // counter inside a loop.
+                    if current_offset == 0 {
+                        return SyntaxTree::Loop { block };
+                    }
 
-    pub fn add(&mut self, add: i32) -> Result<()> {
-        let addr = self.addr_strategy.calc(self.cur);
-        let target = self.memory.get_mut(addr).unwrap();
-        let strategy = self.cell_strategy.as_ref();
-        let res = self.overflow_strategy.add(strategy, *target, add)?;
-        *target = res;
-        Ok(())
-    }
-
-    pub fn set(&mut self, val: i8) {
-        let addr = self.addr_strategy.calc(self.cur);
-        let target = self.memory.get_mut(addr).unwrap();
-
-        if let Some(res) = self.eof_strategy.check(val) {
-            *target = res as i32;
+                    target.push(AddUntilZeroArg::new(current_offset, *val))
+                }
+                SyntaxTree::Seek { offset } => current_offset += *offset as isize,
+                _ => return SyntaxTree::Loop { block },
+            }
         }
-    }
 
-    pub fn get(&self) -> i32 {
-        self.memory[self.addr_strategy.calc(self.cur)]
-    }
-}
-```
-
-其中的 `cur` 是相对于 brainfuck 的，如果要访问实际的内存，需要进行转换。
-
-为了实现简单，不管对于 brainfuck 来说内存是什么数据类型，底层均使用 `Vec<i32>` 进行存储，只是在操作是加上判断。
-
-这里为了实现多种配置，使用了策略模式，比如 `AddrStrategy` 就是表示地址范围的特征，它有两个实现 `UnsignedAddrStrategy` 与 `SignedAddrStrategy`。
-
-```rust
-pub trait AddrStrategy {
-    /// Return the initial value the pointer should contain.
-    fn initial(&self) -> isize {
-        0
-    }
-
-    /// Calculate `addr + offset`. Return `None` when `addr + offset` is out of bounds.
-    fn seek(&self, addr: isize, offset: isize) -> Result<isize>;
-
-    /// Calculate the actual address.
-    fn calc(&self, addr: isize) -> usize;
-
-    /// Get the abstract address range.
-    fn range(&self) -> AddrRange;
-}
-
-pub struct UnsignedAddrStrategy {
-    len: usize,
-}
-
-impl UnsignedAddrStrategy {
-    pub fn new(len: usize) -> Self {
-        Self { len }
-    }
-}
-
-impl AddrStrategy for UnsignedAddrStrategy {
-    fn seek(&self, addr: isize, offset: isize) -> Result<isize> {
-        let target = addr + offset;
-
-        if 0 <= target && target < self.len as isize {
-            Ok(target)
+        // Ensure the last behavior is moving the pointer back to the place
+        // where it stayed when the loop started.
+        if current_offset != 0 {
+            SyntaxTree::Loop { block }
         } else {
-            Err(MemoryError::OutOfBounds {
-                now_position: addr,
-                offset,
-                range: self.range(),
-            })
-        }
-    }
-
-    fn calc(&self, addr: isize) -> usize {
-        addr as usize
-    }
-
-    fn range(&self) -> AddrRange {
-        AddrRange {
-            left: 0,
-            right: self.len as isize - 1,
+            SyntaxTree::AddUntilZero { target }
         }
     }
 }
 
-pub struct SignedAddrStrategy {
-    half_len: usize,
-}
+#[cfg(test)]
+mod tests {
+    use crate::compiler::parser::syntax::AddUntilZeroArg;
 
-impl SignedAddrStrategy {
-    pub fn new(half_len: usize) -> Self {
-        Self { half_len }
-    }
-}
+    use super::*;
 
-impl AddrStrategy for SignedAddrStrategy {
-    fn seek(&self, addr: isize, offset: isize) -> Result<isize> {
-        let target = addr + offset;
+    #[test]
+    fn add_until_zero_rule() {
+        let mut optimizer = Optimizer::new();
+        optimizer.add_rule(Box::new(AddUntilZeroRule::new()));
 
-        if -(self.half_len as isize) <= target && target < self.half_len as isize {
-            Ok(target)
-        } else {
-            Err(MemoryError::OutOfBounds {
-                now_position: addr,
-                offset,
-                range: self.range(),
-            })
-        }
-    }
+        let tree = SyntaxTree::Root {
+            block: vec![
+                SyntaxTree::Loop {
+                    block: vec![
+                        SyntaxTree::Add { val: -1 },
+                        SyntaxTree::Seek { offset: 2 },
+                        SyntaxTree::Add { val: -2 },
+                        SyntaxTree::Seek { offset: -3 },
+                        SyntaxTree::Add { val: 1 },
+                        SyntaxTree::Seek { offset: 1 },
+                    ],
+                },
+                SyntaxTree::Loop {
+                    block: vec![
+                        SyntaxTree::Add { val: -1 },
+                        SyntaxTree::Seek { offset: 1 },
+                        SyntaxTree::Output,
+                        SyntaxTree::Add { val: 1 },
+                        SyntaxTree::Seek { offset: -1 },
+                    ],
+                },
+            ],
+        };
 
-    fn calc(&self, addr: isize) -> usize {
-        addr as usize + self.half_len
-    }
+        let tree = optimizer.optimize(tree);
 
-    fn range(&self) -> AddrRange {
-        AddrRange {
-            left: -(self.half_len as isize),
-            right: self.half_len as isize - 1,
-        }
-    }
-}
-```
+        let expected = SyntaxTree::Root {
+            block: vec![
+                SyntaxTree::AddUntilZero {
+                    target: vec![AddUntilZeroArg::new(2, -2), AddUntilZeroArg::new(-1, 1)],
+                },
+                SyntaxTree::Loop {
+                    block: vec![
+                        SyntaxTree::Add { val: -1 },
+                        SyntaxTree::Seek { offset: 1 },
+                        SyntaxTree::Output,
+                        SyntaxTree::Add { val: 1 },
+                        SyntaxTree::Seek { offset: -1 },
+                    ],
+                },
+            ],
+        };
 
-其他的策略可以看[源码](https://github.com/ctj12461/brainfuck-interpreter/blob/master/src/interpreter/memory/strategy/mod.rs)。
-
-然后就是具体执行的 `Processor`，其模拟了一个 CPU 的执行：
-
-```rust
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum ProcessorState {
-    Ready,
-    Running,
-    Halted,
-    Failed,
-}
-
-pub struct Processor {
-    counter: Counter,
-    instructions: InstructionList,
-    memory: Memory,
-    in_stream: Box<dyn InStream>,
-    out_stream: Box<dyn OutStream>,
-    state: ProcessorState,
-}
-
-impl Processor {
-    pub fn new(
-        instructions: InstructionList,
-        memory: Memory,
-        in_stream: Box<dyn InStream>,
-        out_stream: Box<dyn OutStream>,
-    ) -> Self {
-        Self {
-            counter: Counter::new(),
-            instructions,
-            memory,
-            in_stream,
-            out_stream,
-            state: ProcessorState::Ready,
-        }
+        assert_eq!(tree, expected);
     }
 
-    pub fn counter(&self) -> usize {
-        self.counter.get()
+    #[test]
+    fn add_while_zero_rule_with_changing_the_counter_incorrectly() {
+        let mut optimizer = Optimizer::new();
+        optimizer.add_rule(Box::new(AddUntilZeroRule::new()));
+
+        let tree = SyntaxTree::Root {
+            block: vec![SyntaxTree::Loop {
+                block: vec![
+                    SyntaxTree::Add { val: -1 },
+                    SyntaxTree::Seek { offset: 1 },
+                    SyntaxTree::Add { val: 1 },
+                    // Move the pointer to the counter and change it apart from
+                    // the decrement in the front of the loop.
+                    SyntaxTree::Seek { offset: -1 },
+                    SyntaxTree::Add { val: -1 },
+                ],
+            }],
+        };
+
+        let tree = optimizer.optimize(tree);
+
+        // Failed to optimize the code and nothing changed
+        let expected = SyntaxTree::Root {
+            block: vec![SyntaxTree::Loop {
+                block: vec![
+                    SyntaxTree::Add { val: -1 },
+                    SyntaxTree::Seek { offset: 1 },
+                    SyntaxTree::Add { val: 1 },
+                    SyntaxTree::Seek { offset: -1 },
+                    SyntaxTree::Add { val: -1 },
+                ],
+            }],
+        };
+
+        assert_eq!(tree, expected);
     }
 
-    pub fn memory(&self) -> &Memory {
-        &self.memory
-    }
-
-    pub fn state(&self) -> ProcessorState {
-        self.state
-    }
-
-    fn abort(&mut self) {
-        self.state = ProcessorState::Failed;
-    }
-
-    fn tick(&mut self) {
-        self.counter.tick();
-        self.check_halted();
-    }
-
-    fn check_halted(&mut self) {
-        if self.instructions.0[self.counter.get()] == Instruction::Halt {
-            self.state = ProcessorState::Halted;
-        }
-    }
-
-    pub fn step(&mut self) -> Result<()> {
-        match self.state {
-            ProcessorState::Halted => return Err(ProcessorError::AlreadyHalted),
-            ProcessorState::Failed => return Err(ProcessorError::Failed),
-            _ => {}
-        }
-
-        match self.instructions.0[self.counter.get()] {
-            Instruction::Add(val) => {
-                if let Err(e) = self.memory.add(val) {
-                    self.abort();
-                    Err(e.into())
-                } else {
-                    self.tick();
-                    Ok(())
-                }
-            }
-            Instruction::Seek(offset) => {
-                if let Err(e) = self.memory.seek(offset) {
-                    self.abort();
-                    Err(e.into())
-                } else {
-                    self.tick();
-                    Ok(())
-                }
-            }
-            Instruction::Input => {
-                self.memory.set(self.in_stream.read());
-                self.tick();
-                Ok(())
-            }
-            Instruction::Output => {
-                self.out_stream.write(self.memory.get());
-                self.tick();
-                Ok(())
-            }
-            Instruction::Jump(target) => {
-                self.counter.jump(target);
-                self.check_halted();
-                Ok(())
-            }
-            Instruction::JumpIfZero(target) => {
-                if self.memory.get() == 0 {
-                    self.counter.jump(target);
-                    self.check_halted();
-                } else {
-                    self.tick();
-                }
-
-                Ok(())
-            }
-            Instruction::Halt => {
-                unreachable!()
-            }
-        }
-    }
-
-    pub fn run(&mut self) -> Result<()> {
-        match self.state {
-            ProcessorState::Halted => return Err(ProcessorError::AlreadyHalted),
-            ProcessorState::Failed => return Err(ProcessorError::Failed),
-            _ => {}
-        }
-
-        while self.state == ProcessorState::Ready || self.state == ProcessorState::Running {
-            self.step()?
-        }
-
-        Ok(())
-    }
+    // ...
 }
 ```
-
-整体上就是比较简单的模拟。对于中间出现的错误，直接返回，并且把 `Processor` 的状态设置为 `Failed`，不再可用。
-
-有了这些，就可以组装出一个 `Interpreter`，这个也不放代码了。
-
-### 错误处理
-
-利用 snafu 来化简错误定义，只要通过给错误添加 `#[derive(Snafu)]`、给错误的枚举项添加 `#[snafu(display("..."))]` 就可以自动实现 `Display`，这与 thiserror 类似。
-
-错误采用层层包装的方式传播给上层，最后在 `main()` 里全部输出。
-
-我个人认为使用每一个模块定义一个错误并包装下层错误的方式会更好，即使是在二进制 crate 中，这样返回错误的方式能够保留错误的发出路径，而使用 `Box<dyn Error>` 或者 anyhow crate 就只能保留最底层的错误消息，缺少了层次。
-
-比如运行 `brainfuck-interpreter --overflow error ./examples/squares.bf`，最终的错误信息是：
-
-```plain
-error: an error occurred when running the code
-caused by: invalid memory operation occured
-caused by: 127 + 1 will overflow
-```
-
-相比一行的 `error: 127 + 1 will overflow` 就更加清晰。
-
-为了实现这样的功能，只要在输出本层级错误信息时加上 `\ncaused by: {source}` 即可，比如下面：
-
-```rust
-#[derive(Snafu, Debug, PartialEq, Eq)]
-pub enum InterpreterError {
-    #[snafu(display("couldn't parse the code\ncaused by: {source}"))]
-    Parse { source: ParseError },
-    #[snafu(display("an error occurred when running the code\ncaused by: {source}"))]
-    Runtime { source: ProcessorError },
-    #[snafu(display("the program hasn't been loaded yet"))]
-    Uninitialized,
-}
-```
-
-输出最顶层错误时用 `eprintln!("error: {e}")` 即可。
-
-### 其他
-
-这个解释器其实还有很多优化空间，比如可以对一些特定的 brainfuck 代码做优化，如 `[-]` 就是把当前位清零，`[->+<]` 就是把当前单元清零，并把其中的值都加到地址加一的单元里。如果完善这些优化，执行速度应该会有巨大的提升。另外可以考虑做一个 REPL，如果实现了应该就是第一个实现 brainfuck REPL 的项目了。
