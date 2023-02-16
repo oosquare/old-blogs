@@ -407,3 +407,148 @@ mod tests {
     // ...
 }
 ```
+
+### 内存
+
+为了实现内存可配置，我使用了策略模式，定义以下 4 个 `trait`：
+
+- `AddrStrategy`：地址范围（目前支持无符号和有符号地址范围）以及与地址和指针有关的操作
+- `CellStrategy`：针对不同的大小的单元的操作
+- `EofStrategy`：EOF 的处理方式
+- `OverflowStrategy`：溢出的处理方式
+
+```rust
+// crates/common/src/execution/memory/mod.rs
+
+pub type Result<T> = std::result::Result<T, MemoryError>;
+
+#[derive(Snafu, Debug, PartialEq, Eq)]
+pub enum MemoryError {
+    #[snafu(display("try to seek pointer from {} to {}, which is out of [{}, {}]",
+    now_position, now_position + offset, range.left, range.right))]
+    OutOfBounds {
+        now_position: isize,
+        offset: isize,
+        range: AddrRange,
+    },
+    #[snafu(display("{before} + {add} will overflow"))]
+    Overflow { before: i32, add: i32 },
+}
+
+// ...
+
+// crates/common/src/execution/memory/strategy/mod.rs
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct AddrRange {
+    pub left: isize,
+    pub right: isize,
+}
+
+pub trait AddrStrategy {
+    /// Return the initial value the pointer should contain.
+    fn initial(&self) -> isize {
+        0
+    }
+
+    /// Calculate `addr + offset`. Return `None` when `addr + offset` is out of bounds.
+    fn seek(&self, addr: isize, offset: isize) -> Result<isize>;
+
+    /// Calculate the actual address.
+    fn calc(&self, addr: isize) -> usize;
+
+    /// Get the abstract address range.
+    fn range(&self) -> AddrRange;
+}
+
+pub trait CellStrategy {
+    fn is_overflowed(&self, num: i64) -> bool;
+
+    fn wrap(&self, num: i64) -> i32;
+}
+
+pub trait OverflowStrategy {
+    /// Calculate and check the value for the `add` operation.
+    fn add(&self, cell_strategy: &dyn CellStrategy, before: i32, add: i32) -> Result<i32>;
+}
+
+pub trait EofStrategy {
+    fn check(&self, input: i8) -> Option<i8>;
+}
+
+// ...
+```
+
+具体实现见 [GitHub](https://github.com/ctj12461/brainfuck-interpreter/blob/master/crates/common/src/execution/memory/strategy/mod.rs)。
+
+然后就可以实现内存的操作了：
+
+```rust
+// crates/common/src/execution/memory/mod.rs
+
+pub struct Memory {
+    memory: Vec<i32>,
+    cur: isize,
+    addr_strategy: Box<dyn AddrStrategy>,
+    cell_strategy: Box<dyn CellStrategy>,
+    eof_strategy: Box<dyn EofStrategy>,
+    overflow_strategy: Box<dyn OverflowStrategy>,
+}
+
+impl Memory {
+    pub fn new(
+        addr_strategy: Box<dyn AddrStrategy>,
+        cell_strategy: Box<dyn CellStrategy>,
+        eof_strategy: Box<dyn EofStrategy>,
+        overflow_strategy: Box<dyn OverflowStrategy>,
+    ) -> Self {
+        let memory = vec![0; addr_strategy.range().len()];
+        let cur = addr_strategy.initial();
+        Self {
+            memory,
+            cur,
+            addr_strategy,
+            cell_strategy,
+            eof_strategy,
+            overflow_strategy,
+        }
+    }
+
+    pub fn seek(&mut self, offset: isize) -> Result<()> {
+        self.cur = self.addr_strategy.seek(self.cur, offset)?;
+        Ok(())
+    }
+
+    pub fn position(&self) -> isize {
+        self.cur
+    }
+
+    pub fn add(&mut self, add: i32) -> Result<()> {
+        let addr = self.addr_strategy.calc(self.cur);
+        let target = self.memory.get_mut(addr).unwrap();
+        let strategy = self.cell_strategy.as_ref();
+        let res = self.overflow_strategy.add(strategy, *target, add)?;
+        *target = res;
+        Ok(())
+    }
+
+    pub fn set(&mut self, val: i8) {
+        let addr = self.addr_strategy.calc(self.cur);
+        let target = self.memory.get_mut(addr).unwrap();
+
+        if let Some(res) = self.eof_strategy.check(val) {
+            *target = res as i32;
+        }
+    }
+
+    pub fn get(&self) -> i32 {
+        self.memory[self.addr_strategy.calc(self.cur)]
+    }
+}
+
+// ...
+```
+
+注意，这里 `Memory` 中的 `cur` 存储的是抽象层次上的指针，最终访问底层数据结构时是需要用 `AddrStragety::calc` 来换算的。
+
+其他的实现都比较简单，本文就不再赘述了。
