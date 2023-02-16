@@ -1,7 +1,7 @@
 baseURL: "https://ctj12461.netlify.app"
 theme: pure
 title: "ctj12461's Blog"
-copyright: "CC BY-NC 4.0"
+copyright: "CC BY-NC-SA 4.0"
 defaultContentLanguage: zh  # en/zh/...
 footnoteReturnLinkContents: ↩
 hasCJKLanguage: true
@@ -68,7 +68,7 @@ params:
   since: 2022
   dateFormatToUse: "2006-01-02"
   enablePostCopyright: true
-  copyright_link: https://creativecommons.org/licenses/by-nc/4.0/
+  copyright_link: https://creativecommons.org/licenses/by-nc-sa/4.0/
   # the directory under content folder that you want to render
   mainSections: ["posts"]
   # Enable/Disable menu icons

@@ -7,7 +7,7 @@ author: "ctj12461"
 authorLink: ""
 description: ""
 keywords: ""
-license: "本文以 CC BY-NC 4.0 许可证发布"
+license: "本文以 CC BY-NC-SA 4.0 许可证发布"
 comment: false
 weight: 0
 
