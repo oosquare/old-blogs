@@ -10,10 +10,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
-          fetch-depth: 0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
@@ -25,14 +24,11 @@ jobs:
         run: hugo --minify
 
       - name: Clone Destination Repo
-        uses: sudosubin/git-clone-action@v1.0.1
-        with:
-          repository: 'ctj12461/site-output'
-          platform: 'github'
-          path: 'dest'
-      
-      - run: cp -rf ./public/* ./dest/
+        run: git clone https://github.com/ctj12461/site-output dest
 
+      - name: Update
+        run: cp -rf ./public/* ./dest/
+      
       - name: Deploy
         uses: tech-thinker/push-to-repo@main
         env:
